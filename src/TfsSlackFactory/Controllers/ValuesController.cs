@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
+using TfsSlackFactory.Models;
+using TfsSlackFactory.Services;
 
 namespace TfsSlackFactory.Controllers
 {
@@ -21,6 +23,22 @@ namespace TfsSlackFactory.Controllers
         public string Get(int id)
         {
             return "value";
+        }
+
+        // GET api/values/SlackTest
+        [HttpGet("SlackTest")]
+        public string SlackTest()
+        {
+            var slackWebHookUrl = "https://hooks.slack.com/services/...";
+            SlackService slackService = new SlackService(slackWebHookUrl);
+            slackService.PostMessage(new SlackPayload
+            {
+                Channel = "#test",
+                IconEmoji = ":fire:",
+                Text = "my test message",
+                Username = "tfsSlackFactory"
+            });
+            return "done";
         }
 
         // POST api/values
