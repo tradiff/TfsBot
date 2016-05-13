@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using Newtonsoft.Json;
+using TfsSlackFactory.Models;
 
 namespace TfsSlackFactory.Controllers
 {
@@ -17,7 +18,7 @@ namespace TfsSlackFactory.Controllers
         {
             StreamReader reader = new StreamReader(Request.Body);
             var json = reader.ReadToEnd();
-            var obj = JsonConvert.DeserializeObject(json);
+            var obj = JsonConvert.DeserializeObject<RootObject>(json);
             return Ok("Test");
         }
     }
