@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
+using Microsoft.Extensions.OptionsModel;
 using TfsSlackFactory.Models;
 using TfsSlackFactory.Services;
 
@@ -11,11 +12,18 @@ namespace TfsSlackFactory.Controllers
     [Route("api/[controller]")]
     public class ValuesController : Controller
     {
+        private readonly List<SettingsIntegrationGroupModel> _integrations;
+
+        public ValuesController(IOptions<List<SettingsIntegrationGroupModel>> integrations)
+        {
+            _integrations = integrations.Value;
+        }
+
         // GET: api/values
         [HttpGet]
         public IEnumerable<string> Get()
         {
-            var integrationGroups = SettingsService.Instance.Settings.IntegrationGroups;
+            var integrationGroups = _integrations;
             Console.WriteLine($"The following {integrationGroups.Count} integration groups were found:");
             foreach (var integrationGroup in integrationGroups)
             {

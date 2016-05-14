@@ -14,7 +14,7 @@ namespace TfsSlackFactory.Controllers
     {
         // GET: api/values
         [HttpPost("")]
-        public IActionResult Post()
+        public IActionResult Post(string @event)
         {
             StreamReader reader = new StreamReader(Request.Body);
             var json = reader.ReadToEnd();
