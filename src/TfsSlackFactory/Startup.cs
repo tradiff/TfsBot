@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
+using Microsoft.AspNet.Http.Features;
+using Microsoft.AspNet.Server.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -47,13 +49,13 @@ namespace TfsSlackFactory
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            app.UseIISPlatformHandler();
+            var listeningPort = Configuration["ListeningPort"];
+            var serverAddresses = app.ServerFeatures.Get<IServerAddressesFeature>();
+            serverAddresses.Addresses.Clear();
+            serverAddresses.Addresses.Add($"http://*:{listeningPort}/");
+            Console.WriteLine($"Magic happens on http://localhost:{listeningPort}/");
 
-            app.UseApplicationInsightsRequestTelemetry();
 
-            app.UseApplicationInsightsExceptionTelemetry();
-
-            app.UseStaticFiles();
 
             app.UseMvc();
         }
