@@ -12,17 +12,12 @@ namespace TfsSlackFactory.Services
 {
     public class SlackService
     {
-
-        private readonly Uri _uri;
-        private readonly Encoding _encoding = new UTF8Encoding();
-
-        public SlackService(string urlWithAccessToken)
+        public SlackService()
         {
-            _uri = new Uri(urlWithAccessToken);
         }
 
         //Post a message using a Payload object
-        public void PostMessage(SlackPayload payload)
+        public void PostMessage(string webhookUrl, SlackPayload payload)
         {
             string payloadJson = JsonConvert.SerializeObject(payload);
 
@@ -31,8 +26,8 @@ namespace TfsSlackFactory.Services
                 NameValueCollection data = new NameValueCollection();
                 data["payload"] = payloadJson;
 
-                var response = client.UploadValues(_uri, "POST", data);
-
+                var response = client.UploadValues(new Uri(webhookUrl), "POST", data);
+                Encoding _encoding = new UTF8Encoding();
                 //The response text is usually "ok"
                 string responseText = _encoding.GetString(response);
             }

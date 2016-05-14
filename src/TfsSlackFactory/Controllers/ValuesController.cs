@@ -30,8 +30,8 @@ namespace TfsSlackFactory.Controllers
         public string SlackTest()
         {
             var slackWebHookUrl = "https://hooks.slack.com/services/...";
-            SlackService slackService = new SlackService(slackWebHookUrl);
-            slackService.PostMessage(new SlackPayload
+            SlackService slackService = new SlackService();
+            slackService.PostMessage(slackWebHookUrl, new SlackPayload
             {
                 Channel = "#test",
                 IconEmoji = ":fire:",
