@@ -15,6 +15,12 @@ namespace TfsSlackFactory.Controllers
         [HttpGet]
         public IEnumerable<string> Get()
         {
+            var integrationGroups = SettingsService.Instance.Settings.IntegrationGroups;
+            Console.WriteLine($"The following {integrationGroups.Count} integration groups were found:");
+            foreach (var integrationGroup in integrationGroups)
+            {
+                Console.WriteLine(integrationGroup.Name);
+            }
             return new string[] { "value1", "value2" };
         }
 
