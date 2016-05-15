@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TfsSlackFactory.Models;
+using TfsSlackFactory.Services;
 
 namespace TfsSlackFactory
 {
@@ -37,8 +38,11 @@ namespace TfsSlackFactory
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<List<SettingsIntegrationGroupModel>>(Configuration.GetSection("integrations"));
+            services.Configure<TfsSettings>(Configuration.GetSection("tfs"));
             // Add framework services.
             services.AddApplicationInsightsTelemetry(Configuration);
+
+            services.AddTransient<TfsService, TfsService>();
 
             services.AddMvc();
         }

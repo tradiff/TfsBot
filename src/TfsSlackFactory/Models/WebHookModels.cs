@@ -103,7 +103,7 @@ namespace TfsSlackFactory.Models
         public Revision Revision { get; set; }
     }
 
-    public class RootObject
+    public class WorkItemHook
     {
         public string Id { get; set; }
         public string EventType { get; set; }
