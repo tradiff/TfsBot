@@ -31,6 +31,11 @@ namespace TfsSlackFactory.Services
 
         public bool IsWorkItemInQuery(int workItemId, string project, string query)
         {
+            if (query.Contains("@wiId"))
+            {
+                query = query.Replace("@wiId", workItemId.ToString());
+            }
+
             var requestUrl = $"{_baseAddress}{project}/_apis/wit/wiql?api-version=1.0";
             using (WebClient client = GetWebClient())
             {
@@ -49,7 +54,7 @@ namespace TfsSlackFactory.Services
                 return false;
             }
         }
-
+        
         private WebClient GetWebClient()
         {
             return new WebClient {Credentials = _networkCredential};
