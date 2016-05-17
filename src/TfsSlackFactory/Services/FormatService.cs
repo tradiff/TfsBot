@@ -2,7 +2,7 @@
 
 namespace TfsSlackFactory.Services
 {
-    public class Formatter
+    public class FormatService
     {
         public string Format(SlackWorkItemModel model, string formatString)
         {
