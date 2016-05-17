@@ -29,7 +29,7 @@ namespace TfsSlackFactory.Controllers
         {
             if (string.IsNullOrWhiteSpace(integration))
             {
-                throw  new ArgumentNullException(nameof(integration));
+                throw new ArgumentNullException(nameof(integration));
             }
 
             if (!_integrations.Any(a => String.Equals(a.Name, integration, StringComparison.CurrentCultureIgnoreCase)))

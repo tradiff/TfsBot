@@ -28,8 +28,12 @@ namespace TfsSlackFactory
             {
                 Console.WriteLine("Starting console mode");
                 OnStart(null);
-                Console.WriteLine("To exit, press any key");
-                Console.ReadKey(true);
+                if (Startup.Started)
+                {
+                    Console.WriteLine("Started the server");
+                    Console.WriteLine("To exit, press any key");
+                    Console.ReadKey(true);
+                }
                 Console.WriteLine("Stopping server...");
                 OnStop();
             }
@@ -49,7 +53,6 @@ namespace TfsSlackFactory
                 .UseServer("Microsoft.AspNet.Server.Kestrel")
                 .Build()
                 .Start();
-            Console.WriteLine("Started the server");
 
         }
 

@@ -9,6 +9,7 @@ using Microsoft.AspNet.Server.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.OptionsModel;
 using TfsSlackFactory.Models;
 using TfsSlackFactory.Services;
 
@@ -16,8 +17,12 @@ namespace TfsSlackFactory
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment env)
+        public static bool Started { get; set; }
+        private readonly ILogger<Startup> _logger;
+
+        public Startup(IHostingEnvironment env, ILogger<Startup> logger)
         {
+            _logger = logger;
             // Set up configuration sources.
             var builder = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json");
@@ -48,23 +53,46 @@ namespace TfsSlackFactory
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IOptions<TfsSettings> tfsSettings)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
+
+            if (!SettingsCheck(tfsSettings))
+            {
+                return;
+            }
 
             var listeningPort = Configuration["ListeningPort"];
             var serverAddresses = app.ServerFeatures.Get<IServerAddressesFeature>();
             serverAddresses.Addresses.Clear();
             serverAddresses.Addresses.Add($"http://*:{listeningPort}/");
-            Console.WriteLine($"Magic happens on http://localhost:{listeningPort}/");
-
-
+            _logger.LogInformation($"Magic happens at http://*:{listeningPort}/");
 
             app.UseMvc();
+            Started = true;
         }
 
-        // Entry point for the application.
-        public static void Main(string[] args) => WebApplication.Run<Startup>(args);
+        private bool SettingsCheck(IOptions<TfsSettings> tfsSettings)
+        {
+            bool result = true;
+            if (string.IsNullOrWhiteSpace(tfsSettings.Value.Server))
+            {
+                _logger.LogError("appsettings.json is missing the value for tfs\\server");
+                result = false;
+            }
+            if (string.IsNullOrWhiteSpace(tfsSettings.Value.Username))
+            {
+                _logger.LogError("appsettings.json is missing the value for tfs\\username");
+                result = false;
+            }
+            if (string.IsNullOrWhiteSpace(tfsSettings.Value.Password))
+            {
+                _logger.LogError("appsettings.json is missing the value for tfs\\password");
+                result = false;
+            }
+
+            return result;
+        }
     }
 }
