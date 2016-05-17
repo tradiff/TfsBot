@@ -20,12 +20,13 @@ namespace TfsSlackFactory.Services
         }
 
 
-        public void GetWorkItem(int workItemId)
+        public dynamic GetWorkItem(int workItemId)
         {
             using (WebClient client = GetWebClient())
             {
                 var response = client.DownloadString($"{_baseAddress}_apis/wit/workItems/{workItemId}?$expand=relations&api-version=1.0");
                 dynamic responseObject = JObject.Parse(response);
+                return responseObject;
             }
         }
 

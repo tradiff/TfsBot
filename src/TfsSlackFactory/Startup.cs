@@ -47,6 +47,8 @@ namespace TfsSlackFactory
             // Add framework services.
             services.AddApplicationInsightsTelemetry(Configuration);
 
+            services.AddTransient<FormatService, FormatService>();
+            services.AddTransient<SlackService, SlackService>();
             services.AddTransient<TfsService, TfsService>();
 
             services.AddMvc();

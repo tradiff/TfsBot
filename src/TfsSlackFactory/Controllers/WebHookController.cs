@@ -14,11 +14,15 @@ namespace TfsSlackFactory.Controllers
     [Route("api/[controller]")]
     public class WebHookController : Controller
     {
+        private readonly FormatService _formatService;
+        private readonly SlackService _slackService;
         private readonly TfsService _tfsService;
         private readonly List<SettingsIntegrationGroupModel> _integrations;
 
-        public WebHookController(IOptions<List<SettingsIntegrationGroupModel>> integrations, TfsService tfsService)
+        public WebHookController(IOptions<List<SettingsIntegrationGroupModel>> integrations, FormatService formatService, SlackService slackService, TfsService tfsService)
         {
+            _formatService = formatService;
+            _slackService = slackService;
             _tfsService = tfsService;
             _integrations = integrations.Value;
         }
@@ -41,7 +45,42 @@ namespace TfsSlackFactory.Controllers
             var json = reader.ReadToEnd();
             var obj = JsonConvert.DeserializeObject<WorkItemHook>(json);
 
-            _tfsService.GetWorkItem(obj.Resource.WorkItemId);
+            // todo: loop through integrations
+
+            // todo: check wiql
+
+            var dynamicWorkItem = _tfsService.GetWorkItem(obj.Resource.WorkItemId);
+
+            //todo: get parent work item as dynamic also
+
+            //todo: build SlackWorkItemModel from the two dynamics
+
+            // mock SlackWorkItemModel:
+            var swim = new SlackWorkItemModel
+            {
+                WiId = "1234",
+                WiTitle = "Test Task",
+                WiUrl = "https://tfs.datalinksoftware.com/tfs/DefaultCollection/CareBook/_workitems#_a=edit&id=23357",
+                DisplayName = "Fred Flintstone",
+                ParentWiId = "123",
+                ParentWiTitle = "Test PBI",
+                ParentWiType = "Bug",
+                ParentWiUrl = "https://tfs.datalinksoftware.com/tfs/DefaultCollection/CareBook/_workitems#_a=edit&id=23357"
+            };
+
+            var message =
+                "<{parentWiUrl}|{parentWiType} {parentWiId}: {parentWiTitle}> > <{wiUrl}|Task {wiId}: {wiTitle}> completed by {displayName}";
+
+            message = _formatService.Format(swim, message);
+
+            _slackService.PostMessage("https://hooks.slack.com/services/...",
+                new SlackPayload
+                {
+                    Channel = "#test",
+                    IconEmoji = ":ghost:",
+                    Username = "tfsbot",
+                    Text = message
+                });
 
             return Ok("Test");
         }
