@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text;
 using Microsoft.Extensions.OptionsModel;
@@ -20,12 +21,21 @@ namespace TfsSlackFactory.Services
         }
 
 
-        public dynamic GetWorkItem(int workItemId)
+        public dynamic GetWorkItem(int workItemId, bool isParent = false)
         {
             using (WebClient client = GetWebClient())
             {
                 var response = client.DownloadString($"{_baseAddress}_apis/wit/workItems/{workItemId}?$expand=relations&api-version=1.0");
                 dynamic responseObject = JObject.Parse(response);
+                var obj = JsonConvert.DeserializeObject<TfsWorkItemModel>(response);
+
+                var model = SlackWorkItemModel.FromTfs(obj);
+
+                if (!isParent && obj.Relations != null && obj.Relations.Any(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse"))
+                {
+                    
+                }
+
                 return responseObject;
             }
         }
