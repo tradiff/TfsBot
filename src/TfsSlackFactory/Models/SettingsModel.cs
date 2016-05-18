@@ -25,5 +25,6 @@ namespace TfsSlackFactory.Models
         public string SlackChannel { get; set; }
         public string SlackUsername { get; set; }
         public string SlackIconEmoji { get; set; }
+        public string SlackColor { get; set; }
     }
 }

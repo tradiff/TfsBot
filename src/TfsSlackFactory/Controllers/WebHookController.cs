@@ -55,21 +55,21 @@ namespace TfsSlackFactory.Controllers
 
                 if (!string.IsNullOrWhiteSpace(hookIntegration.WhiteListQuery) && !_tfsService.IsWorkItemInQuery(workItem.WiId, workItem.ProjectName, hookIntegration.WhiteListQuery))
                 {
-                   continue;
+                    continue;
                 }
 
                 workItem.IsAssigmentChanged = obj.Resource.Fields.AssignedTo?.NewValue != obj.Resource.Fields.AssignedTo?.OldValue;
                 workItem.IsStateChanged = obj.Resource.Fields.State?.NewValue != obj.Resource.Fields.State?.OldValue;
 
                 var message = _formatService.Format(workItem, hookIntegration.Format);
-
                 _slackService.PostMessage(hookIntegration.SlackWebHookUrl,
-                    new SlackPayload
+                    new SlackMessageDTO
                     {
-                        Channel = "#test",
-                        IconEmoji = ":ghost:",
-                        Username = "tfsbot",
-                        Text = message
+                        Channel = hookIntegration.SlackChannel,
+                        IconEmoji = hookIntegration.SlackIconEmoji,
+                        Username = hookIntegration.SlackUsername,
+                        Text = message,
+                        Color = hookIntegration.SlackColor
                     });
             }
 

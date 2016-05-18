@@ -17,8 +17,22 @@ namespace TfsSlackFactory.Services
         }
 
         //Post a message using a Payload object
-        public void PostMessage(string webhookUrl, SlackPayload payload)
+        public void PostMessage(string webhookUrl, SlackMessageDTO dto)
         {
+            var payload = new SlackPayload
+            {
+                Channel = dto.Channel,
+                IconEmoji = dto.IconEmoji,
+                Username = dto.Username,
+                Attachments = new List<SlackAttachment>
+                {
+                    new SlackAttachment
+                    {
+                        Color = dto.Color,
+                        Text = dto.Text
+                    }
+                }
+            };
             string payloadJson = JsonConvert.SerializeObject(payload);
 
             using (WebClient client = new WebClient())
