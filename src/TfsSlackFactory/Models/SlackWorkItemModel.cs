@@ -41,7 +41,7 @@ namespace TfsSlackFactory.Models
             model.AssignedTo = GetDisplayName(tfsModel.Fields.AssignedTo);
             model.AssignedToUserName = GetUserName(tfsModel.Fields.AssignedTo);
             model.ProjectName = tfsModel.Fields.TeamProject;
-            model.WiUrl = tfsModel.Url;
+            model.WiUrl = tfsModel.Links.Html.Href;
             model.WiType = tfsModel.Fields.WorkItemType;
             model.WiId = tfsModel.Id;
             model.WiTitle = tfsModel.Fields.Title;

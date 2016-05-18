@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace TfsSlackFactory.Models
 {
@@ -10,7 +9,25 @@ namespace TfsSlackFactory.Models
         public int Rev { get; set; }
         public RevisionFields Fields { get; set; }
         public Releation[] Relations { get; set; }
+        [JsonProperty("_links")]
+        public TfsLinks Links { get; set; }
         public string Url { get; set; }
+
+        public class TfsLinks
+        {
+            public Link Self { get; set; }
+            public Link WorkItemUpdates { get; set; }
+            public Link WorkItemRevisions { get; set; }
+            public Link WorkItemHistory { get; set; }
+            public Link Html { get; set; }
+            public Link WorkItemType { get; set; }
+            public Link Fields { get; set; }
+        }
+
+        public class Link
+        {
+            public string Href { get; set; }
+        }
 
         public class RevisionFields
         {
