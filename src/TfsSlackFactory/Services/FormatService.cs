@@ -8,14 +8,14 @@ namespace TfsSlackFactory.Services
         {
             string message = formatString;
             message = message.Replace("{teamProjectCollection}", model.TeamProjectCollection);
-            message = message.Replace("{dDisplayName}", model.DisplayName);
+            message = message.Replace("{displayName}", model.DisplayName);
             message = message.Replace("{projectName}", model.ProjectName);
             message = message.Replace("{wiUrl}", model.WiUrl);
             message = message.Replace("{wiType}", model.WiType);
-            message = message.Replace("{wiId}", model.WiId);
+            message = message.Replace("{wiId}", model.WiId.ToString());
             message = message.Replace("{wiTitle}", model.WiTitle);
-            message = message.Replace("{isStateChanged}", model.IsStateChanged);
-            message = message.Replace("{isAssigmentChanged}", model.IsAssigmentChanged);
+            message = message.Replace("{isStateChanged}", model.IsStateChanged.ToString());
+            message = message.Replace("{isAssigmentChanged}", model.IsAssigmentChanged.ToString());
             message = message.Replace("{assignedTo}", model.AssignedTo);
             message = message.Replace("{state}", model.State);
             message = message.Replace("{userName}", model.UserName);
@@ -25,7 +25,7 @@ namespace TfsSlackFactory.Services
             message = message.Replace("{mappedUser}", model.MappedUser);
             message = message.Replace("{parentWiUrl}", model.ParentWiUrl);
             message = message.Replace("{parentWiType}", model.ParentWiType);
-            message = message.Replace("{parentWiId}", model.ParentWiId);
+            message = message.Replace("{parentWiId}", model.ParentWiId.ToString());
             message = message.Replace("{parentWiTitle}", model.ParentWiTitle);
             return message;
         }

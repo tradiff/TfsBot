@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using Microsoft.Extensions.OptionsModel;
 using Newtonsoft.Json;
@@ -45,42 +44,34 @@ namespace TfsSlackFactory.Controllers
             var json = reader.ReadToEnd();
             var obj = JsonConvert.DeserializeObject<WorkItemHook>(json);
 
-            // todo: loop through integrations
-
-            // todo: check wiql
-
-            var dynamicWorkItem = _tfsService.GetWorkItem(obj.Resource.WorkItemId);
-
-            //todo: get parent work item as dynamic also
-
-            //todo: build SlackWorkItemModel from the two dynamics
-
-            // mock SlackWorkItemModel:
-            var swim = new SlackWorkItemModel
+            foreach (var hookIntegration in _integrations.Single(x => x.Name.Equals(integration, StringComparison.CurrentCultureIgnoreCase)).Integrations)
             {
-                WiId = "1234",
-                WiTitle = "Test Task",
-                WiUrl = "https://tfs.datalinksoftware.com/tfs/DefaultCollection/CareBook/_workitems#_a=edit&id=23357",
-                DisplayName = "Fred Flintstone",
-                ParentWiId = "123",
-                ParentWiTitle = "Test PBI",
-                ParentWiType = "Bug",
-                ParentWiUrl = "https://tfs.datalinksoftware.com/tfs/DefaultCollection/CareBook/_workitems#_a=edit&id=23357"
-            };
-
-            var message =
-                "<{parentWiUrl}|{parentWiType} {parentWiId}: {parentWiTitle}> > <{wiUrl}|Task {wiId}: {wiTitle}> completed by {displayName}";
-
-            message = _formatService.Format(swim, message);
-
-            _slackService.PostMessage("https://hooks.slack.com/services/...",
-                new SlackPayload
+                if (hookIntegration.Type != obj.EventType)
                 {
-                    Channel = "#test",
-                    IconEmoji = ":ghost:",
-                    Username = "tfsbot",
-                    Text = message
-                });
+                    continue;
+                }
+
+                var workItem = _tfsService.GetWorkItem(obj.Resource.WorkItemId);
+
+                if (!string.IsNullOrWhiteSpace(hookIntegration.WhiteListQuery) && !_tfsService.IsWorkItemInQuery(workItem.WiId, workItem.ProjectName, hookIntegration.WhiteListQuery))
+                {
+                   continue;
+                }
+
+                workItem.IsAssigmentChanged = obj.Resource.Fields.AssignedTo?.NewValue != obj.Resource.Fields.AssignedTo?.OldValue;
+                workItem.IsStateChanged = obj.Resource.Fields.State?.NewValue != obj.Resource.Fields.State?.OldValue;
+
+                var message = _formatService.Format(workItem, hookIntegration.Format);
+
+                _slackService.PostMessage(hookIntegration.SlackWebHookUrl,
+                    new SlackPayload
+                    {
+                        Channel = "#test",
+                        IconEmoji = ":ghost:",
+                        Username = "tfsbot",
+                        Text = message
+                    });
+            }
 
             return Ok("Test");
         }

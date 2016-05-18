@@ -21,22 +21,36 @@ namespace TfsSlackFactory.Services
         }
 
 
-        public dynamic GetWorkItem(int workItemId, bool isParent = false)
+        public SlackWorkItemModel GetWorkItem(int workItemId)
         {
             using (WebClient client = GetWebClient())
             {
                 var response = client.DownloadString($"{_baseAddress}_apis/wit/workItems/{workItemId}?$expand=relations&api-version=1.0");
-                dynamic responseObject = JObject.Parse(response);
                 var obj = JsonConvert.DeserializeObject<TfsWorkItemModel>(response);
 
                 var model = SlackWorkItemModel.FromTfs(obj);
 
-                if (!isParent && obj.Relations != null && obj.Relations.Any(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse"))
+                if (obj.Relations != null && obj.Relations.Any(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse"))
                 {
-                    
+                    var parentModel = GetWorkItem(obj.Relations.Single(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse").Url);
+                    model.ParentWiId = parentModel.WiId;
+                    model.ParentWiTitle = parentModel.WiTitle;
+                    model.ParentWiType = parentModel.WiType;
+                    model.ParentWiUrl = parentModel.WiUrl;
                 }
 
-                return responseObject;
+                return model;
+            }
+        }
+
+        private SlackWorkItemModel GetWorkItem(string workItemUrl)
+        {
+            using (WebClient client = GetWebClient())
+            {
+                var response = client.DownloadString($"{workItemUrl}?$expand=relations&api-version=1.0");
+                var obj = JsonConvert.DeserializeObject<TfsWorkItemModel>(response);
+
+                return SlackWorkItemModel.FromTfs(obj);
             }
         }
 
@@ -54,13 +68,28 @@ namespace TfsSlackFactory.Services
                 var jsonBody = JsonConvert.SerializeObject(new { query });
                 var response = client.UploadData(requestUrl, "POST", Encoding.UTF8.GetBytes(jsonBody));
                 dynamic responseObject = JObject.Parse(Encoding.UTF8.GetString(response));
-                
-                foreach (var workItem in responseObject.workItems)
+
+                if (responseObject.workItemRelations != null)
                 {
-                    if (workItem.id == workItemId)
+                    foreach (var workItem in responseObject.workItemRelations)
                     {
-                        return true;
-                    }    
+                        if (workItem.source?.id == workItemId)
+                        {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
+                if (responseObject.workItems != null)
+                {
+                    foreach (var workItem in responseObject.workItems)
+                    {
+                        if (workItem.id == workItemId)
+                        {
+                            return true;
+                        }
+                    }
                 }
                 return false;
             }

@@ -10,10 +10,10 @@ namespace TfsSlackFactory.Models
         public string ProjectName { get; set; }
         public string WiUrl { get; set; }
         public string WiType { get; set; }
-        public string WiId { get; set; }
+        public int WiId { get; set; }
         public string WiTitle { get; set; }
-        public string IsStateChanged { get; set; }
-        public string IsAssigmentChanged { get; set; }
+        public bool IsStateChanged { get; set; }
+        public bool IsAssigmentChanged { get; set; }
         public string AssignedTo { get; set; }
         public string State { get; set; }
         public string UserName { get; set; }
@@ -24,7 +24,7 @@ namespace TfsSlackFactory.Models
 
         public string ParentWiUrl { get; set; }
         public string ParentWiType { get; set; }
-        public string ParentWiId { get; set; }
+        public int ParentWiId { get; set; }
         public string ParentWiTitle { get; set; }
 
         public static SlackWorkItemModel FromTfs(TfsWorkItemModel tfsModel)
@@ -43,7 +43,7 @@ namespace TfsSlackFactory.Models
             model.ProjectName = tfsModel.Fields.TeamProject;
             model.WiUrl = tfsModel.Url;
             model.WiType = tfsModel.Fields.WorkItemType;
-            model.WiId = tfsModel.Id.ToString();
+            model.WiId = tfsModel.Id;
             model.WiTitle = tfsModel.Fields.Title;
             model.State = tfsModel.Fields.State;
 
@@ -52,6 +52,11 @@ namespace TfsSlackFactory.Models
 
         private static string GetUserName(string input)
         {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return input;
+            }
+
             Regex regex = new Regex(@"\<(.+?)\>");
             var match = regex.Match(input);
             if (match.Success)
@@ -63,7 +68,7 @@ namespace TfsSlackFactory.Models
 
         private static string GetDisplayName(string input)
         {
-            if (!input.Contains("<"))
+            if (string.IsNullOrWhiteSpace(input) || !input.Contains("<"))
             {
                 return input;
             }
