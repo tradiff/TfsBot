@@ -43,7 +43,7 @@ namespace TfsSlackFactory.Controllers
         [HttpGet("SlackTest")]
         public string SlackTest()
         {
-            var slackWebHookUrl = "https://hooks.slack.com/services/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";
+            var slackWebHookUrl = "https://hooks.slack.com/services/...";
             SlackService slackService = new SlackService();
             slackService.PostMessage(slackWebHookUrl, new SlackMessageDTO
             {
