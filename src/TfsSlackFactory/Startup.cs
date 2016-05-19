@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Builder;
-using Microsoft.AspNet.Hosting;
-using Microsoft.AspNet.Http.Features;
-using Microsoft.AspNet.Server.Features;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.OptionsModel;
+using Microsoft.Extensions.Options;
 using TfsSlackFactory.Models;
 using TfsSlackFactory.Services;
 
@@ -25,16 +24,11 @@ namespace TfsSlackFactory
             _logger = logger;
             // Set up configuration sources.
             var builder = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json");
-
-            if (env.IsEnvironment("Development"))
-            {
-                // This will push telemetry data through Application Insights pipeline faster, allowing you to view results immediately.
-                builder.AddApplicationInsightsSettings(developerMode: true);
-            }
+                .SetBasePath(env.ContentRootPath)
+                .AddJsonFile("appsettings.json", false, true);
 
             builder.AddEnvironmentVariables();
-            Configuration = builder.Build().ReloadOnChanged("appsettings.json");
+            Configuration = builder.Build();
         }
 
         public static IConfigurationRoot Configuration { get; set; }
@@ -42,10 +36,10 @@ namespace TfsSlackFactory
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<List<SettingsIntegrationGroupModel>>(Configuration.GetSection("integrations"));
-            services.Configure<TfsSettings>(Configuration.GetSection("tfs"));
+            services.Configure<List<SettingsIntegrationGroupModel>>(options => Configuration.GetSection("integrations").Bind(options));
+            services.Configure<TfsSettings>(options => Configuration.GetSection("tfs").Bind(options));
+
             // Add framework services.
-            services.AddApplicationInsightsTelemetry(Configuration);
 
             services.AddTransient<FormatService, FormatService>();
             services.AddTransient<SlackService, SlackService>();

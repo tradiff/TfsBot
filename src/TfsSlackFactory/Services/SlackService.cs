@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -35,15 +36,16 @@ namespace TfsSlackFactory.Services
             };
             string payloadJson = JsonConvert.SerializeObject(payload);
 
-            using (WebClient client = new WebClient())
+            using (var client = new HttpClient())
             {
-                NameValueCollection data = new NameValueCollection();
-                data["payload"] = payloadJson;
-
-                var response = client.UploadValues(new Uri(webhookUrl), "POST", data);
-                Encoding _encoding = new UTF8Encoding();
-                //The response text is usually "ok"
-                string responseText = _encoding.GetString(response);
+                var content = new FormUrlEncodedContent(new[]
+                    {
+                        new KeyValuePair<string, string>("payload", payloadJson)
+                    }
+                );
+                var result = client.PostAsync(webhookUrl, content).Result;
+                string resultContent = result.Content.ReadAsStringAsync().Result;
+                Console.WriteLine(resultContent);
             }
         }
     }

@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.AspNet.Mvc;
-using Microsoft.Extensions.OptionsModel;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using TfsSlackFactory.Models;
 using TfsSlackFactory.Services;
@@ -37,7 +37,7 @@ namespace TfsSlackFactory.Controllers
 
             if (!_integrations.Any(a => String.Equals(a.Name, integration, StringComparison.CurrentCultureIgnoreCase)))
             {
-                return HttpBadRequest($"No integration defined that matches {integration}");
+                return BadRequest($"No integration defined that matches {integration}");
             }
 
             StreamReader reader = new StreamReader(Request.Body);
