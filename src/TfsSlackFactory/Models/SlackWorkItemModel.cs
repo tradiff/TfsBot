@@ -5,7 +5,6 @@ namespace TfsSlackFactory.Models
 {
     public class SlackWorkItemModel
     {
-        public string TeamProjectCollection { get; set; }
         public string DisplayName { get; set; }
         public string ProjectName { get; set; }
         public string WiUrl { get; set; }
@@ -17,17 +16,15 @@ namespace TfsSlackFactory.Models
         public string AssignedTo { get; set; }
         public string State { get; set; }
         public string UserName { get; set; }
-        public string Action { get; set; }
         public string AssignedToUserName { get; set; }
-        public string MappedAssignedToUser { get; set; }
-        public string MappedUser { get; set; }
+        public string PreviousState { get; set; }
 
         public string ParentWiUrl { get; set; }
         public string ParentWiType { get; set; }
         public int ParentWiId { get; set; }
         public string ParentWiTitle { get; set; }
 
-        public static SlackWorkItemModel FromTfs(TfsWorkItemModel tfsModel)
+        public static SlackWorkItemModel FromTfs(TfsWorkItemModel tfsModel, WorkItemHook hookModel = null)
         {
             if (tfsModel == null)
             {
@@ -46,6 +43,13 @@ namespace TfsSlackFactory.Models
             model.WiId = tfsModel.Id;
             model.WiTitle = tfsModel.Fields.Title;
             model.State = tfsModel.Fields.State;
+
+            if (hookModel != null)
+            {
+                model.IsAssigmentChanged = hookModel.Resource.Fields.AssignedTo?.NewValue != hookModel.Resource.Fields.AssignedTo?.OldValue;
+                model.IsStateChanged = hookModel.Resource.Fields.State?.NewValue != hookModel.Resource.Fields.State?.OldValue;
+                model.PreviousState = hookModel.Resource.Fields.State?.OldValue;
+            }
 
             return model;
         }

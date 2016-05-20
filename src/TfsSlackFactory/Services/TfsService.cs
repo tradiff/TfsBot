@@ -24,14 +24,14 @@ namespace TfsSlackFactory.Services
         }
 
 
-        public SlackWorkItemModel GetWorkItem(int workItemId)
+        public SlackWorkItemModel GetWorkItem(WorkItemHook hookModel)
         {
             using (var client = GetWebClient())
             {
-                var response = client.GetAsync($"{_baseAddress}_apis/wit/workItems/{workItemId}?$expand=relations&api-version=1.0").Result;
+                var response = client.GetAsync($"{_baseAddress}_apis/wit/workItems/{hookModel.Resource.WorkItemId}?$expand=relations&api-version=1.0").Result;
                 var obj = JsonConvert.DeserializeObject<TfsWorkItemModel>(response.Content.ReadAsStringAsync().Result);
 
-                var model = SlackWorkItemModel.FromTfs(obj);
+                var model = SlackWorkItemModel.FromTfs(obj, hookModel);
 
                 if (obj.Relations != null && obj.Relations.Any(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse"))
                 {

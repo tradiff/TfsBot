@@ -16,13 +16,15 @@ namespace TfsSlackFactory.Controllers
         private readonly FormatService _formatService;
         private readonly SlackService _slackService;
         private readonly TfsService _tfsService;
+        private readonly EvalService _evalService;
         private readonly List<SettingsIntegrationGroupModel> _integrations;
 
-        public WebHookController(IOptions<List<SettingsIntegrationGroupModel>> integrations, FormatService formatService, SlackService slackService, TfsService tfsService)
+        public WebHookController(IOptions<List<SettingsIntegrationGroupModel>> integrations, FormatService formatService, SlackService slackService, TfsService tfsService, EvalService evalService)
         {
             _formatService = formatService;
             _slackService = slackService;
             _tfsService = tfsService;
+            _evalService = evalService;
             _integrations = integrations.Value;
         }
 
@@ -51,15 +53,18 @@ namespace TfsSlackFactory.Controllers
                     continue;
                 }
 
-                var workItem = _tfsService.GetWorkItem(obj.Resource.WorkItemId);
+                var workItem = _tfsService.GetWorkItem(obj);
 
                 if (!string.IsNullOrWhiteSpace(hookIntegration.WhiteListQuery) && !_tfsService.IsWorkItemInQuery(workItem.WiId, workItem.ProjectName, hookIntegration.WhiteListQuery))
                 {
                     continue;
                 }
 
-                workItem.IsAssigmentChanged = obj.Resource.Fields.AssignedTo?.NewValue != obj.Resource.Fields.AssignedTo?.OldValue;
-                workItem.IsStateChanged = obj.Resource.Fields.State?.NewValue != obj.Resource.Fields.State?.OldValue;
+                if (!string.IsNullOrWhiteSpace(hookIntegration.HookFilter) &&
+                    !_evalService.Eval(workItem, hookIntegration.HookFilter))
+                {
+                    continue;
+                }
 
                 var message = _formatService.Format(workItem, hookIntegration.Format);
                 _slackService.PostMessage(hookIntegration.SlackWebHookUrl,

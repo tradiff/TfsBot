@@ -44,6 +44,7 @@ namespace TfsSlackFactory
             services.AddTransient<FormatService, FormatService>();
             services.AddTransient<SlackService, SlackService>();
             services.AddTransient<TfsService, TfsService>();
+            services.AddTransient<EvalService, EvalService>();
 
             services.AddMvc();
         }

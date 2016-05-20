@@ -20,6 +20,7 @@ namespace TfsSlackFactory.Models
     {
         public string Type { get; set; }
         public string WhiteListQuery { get; set; }
+        public string HookFilter { get; set; }
         public string SlackWebHookUrl { get; set; }
         public string Format { get; set; }
         public string SlackChannel { get; set; }

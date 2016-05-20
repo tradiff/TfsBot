@@ -1,12 +1,14 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Scripting;
-using TfsSlackFactory.Models;
 
 namespace TfsSlackFactory.Services
 {
     public class FormatService
     {
-        public string Format(SlackWorkItemModel model, string formatString)
+        public string Format<T>(T model, string formatString)
         {
+            //handle quotes in string
+            formatString = formatString.Replace("\"", "\"\"").Replace("'", "\"\"");
+
             return CSharpScript.EvaluateAsync<string>("$@\"" + formatString + "\"", globals: model).Result;
         }
     }
