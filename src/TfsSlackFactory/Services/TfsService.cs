@@ -13,16 +13,13 @@ namespace TfsSlackFactory.Services
 {
     public class TfsService
     {
-        private readonly HttpClientHandler _clientHandler;
+        private readonly NetworkCredential _networkCredential;
         private readonly string _baseAddress;
 
         public TfsService(IOptions<TfsSettings> tfsSettings)
         {
-            _clientHandler = new HttpClientHandler
-            {
-                Credentials = new NetworkCredential(tfsSettings.Value.Username, tfsSettings.Value.Password)
-            };
-
+            _networkCredential = new NetworkCredential(tfsSettings.Value.Username, tfsSettings.Value.Password);
+            
             _baseAddress = tfsSettings.Value.Server;
         }
 
@@ -105,7 +102,7 @@ namespace TfsSlackFactory.Services
 
         private HttpClient GetWebClient()
         {
-            return new HttpClient(_clientHandler);
+            return new HttpClient(new HttpClientHandler { Credentials = _networkCredential });
         }
     }
 }
