@@ -55,11 +55,6 @@ namespace TfsSlackFactory.Controllers
 
                 var workItem = _tfsService.GetWorkItem(obj);
 
-                if (!string.IsNullOrWhiteSpace(hookIntegration.WhiteListQuery) && !_tfsService.IsWorkItemInQuery(workItem.WiId, workItem.ProjectName, hookIntegration.WhiteListQuery))
-                {
-                    continue;
-                }
-
                 if (!string.IsNullOrWhiteSpace(hookIntegration.HookFilter) &&
                     !_evalService.Eval(workItem, hookIntegration.HookFilter))
                 {

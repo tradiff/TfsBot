@@ -19,7 +19,6 @@ namespace TfsSlackFactory.Models
     public class SettingsIntegrationModel
     {
         public string Type { get; set; }
-        public string WhiteListQuery { get; set; }
         public string HookFilter { get; set; }
         public string SlackWebHookUrl { get; set; }
         public string Format { get; set; }

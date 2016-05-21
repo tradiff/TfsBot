@@ -57,49 +57,6 @@ namespace TfsSlackFactory.Services
             }
         }
 
-        public bool IsWorkItemInQuery(int workItemId, string project, string query)
-        {
-            if (query.Contains("@wiId"))
-            {
-                query = query.Replace("@wiId", workItemId.ToString());
-            }
-
-            var requestUrl = $"{_baseAddress}{project}/_apis/wit/wiql?api-version=1.0";
-            using (var client = GetWebClient())
-            {
-                var jsonBody = JsonConvert.SerializeObject(new { query });
-
-                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-
-                var response = client.PostAsync(requestUrl, content).Result;
-                dynamic responseObject = JObject.Parse(response.Content.ReadAsStringAsync().Result);
-
-                if (responseObject.workItemRelations != null)
-                {
-                    foreach (var workItem in responseObject.workItemRelations)
-                    {
-                        if (workItem.source?.id == workItemId)
-                        {
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-
-                if (responseObject.workItems != null)
-                {
-                    foreach (var workItem in responseObject.workItems)
-                    {
-                        if (workItem.id == workItemId)
-                        {
-                            return true;
-                        }
-                    }
-                }
-                return false;
-            }
-        }
-
         private HttpClient GetWebClient()
         {
             return new HttpClient(new HttpClientHandler { Credentials = _networkCredential });
