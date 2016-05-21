@@ -18,7 +18,7 @@ namespace TfsSlackFactory.Services
         }
 
         //Post a message using a Payload object
-        public void PostMessage(string webhookUrl, SlackMessageDTO dto)
+        public async Task PostMessage(string webhookUrl, SlackMessageDTO dto)
         {
             var payload = new SlackPayload
             {
@@ -44,7 +44,7 @@ namespace TfsSlackFactory.Services
                     }
                 );
                 var result = client.PostAsync(webhookUrl, content).Result;
-                string resultContent = result.Content.ReadAsStringAsync().Result;
+                string resultContent = await result.Content.ReadAsStringAsync();
                 Console.WriteLine(resultContent);
             }
         }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -30,7 +31,7 @@ namespace TfsSlackFactory.Controllers
 
         // GET: api/values
         [HttpPost("")]
-        public IActionResult Post(string integration)
+        public async Task<IActionResult> Post(string integration)
         {
             if (string.IsNullOrWhiteSpace(integration))
             {
@@ -53,16 +54,16 @@ namespace TfsSlackFactory.Controllers
                     continue;
                 }
 
-                var workItem = _tfsService.GetWorkItem(obj);
+                var workItem = await _tfsService.GetWorkItem(obj);
 
                 if (!string.IsNullOrWhiteSpace(hookIntegration.HookFilter) &&
-                    !_evalService.Eval(workItem, hookIntegration.HookFilter))
+                    !await _evalService.Eval(workItem, hookIntegration.HookFilter))
                 {
                     continue;
                 }
 
-                var message = _formatService.Format(workItem, hookIntegration.Format);
-                _slackService.PostMessage(hookIntegration.SlackWebHookUrl,
+                var message = await _formatService.Format(workItem, hookIntegration.Format);
+                await _slackService.PostMessage(hookIntegration.SlackWebHookUrl,
                     new SlackMessageDTO
                     {
                         Channel = hookIntegration.SlackChannel,

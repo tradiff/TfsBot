@@ -1,4 +1,5 @@
 ﻿
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 
 namespace TfsSlackFactory.Services
@@ -11,14 +12,14 @@ namespace TfsSlackFactory.Services
             _formatService = formatService;
         }
 
-        public bool Eval<T>(T model, string formatString)
+        public async Task<bool> Eval<T>(T model, string formatString)
         {
-            formatString = _formatService.Format(model, formatString);
+            formatString = await _formatService.Format(model, formatString);
 
             //sanitize bool for eval
             formatString = formatString.Replace("True", "true").Replace("False", "false");
 
-            return CSharpScript.EvaluateAsync<bool>(formatString).Result;
+            return await CSharpScript.EvaluateAsync<bool>(formatString);
         }
     }
 }
