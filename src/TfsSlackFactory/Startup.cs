@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TfsSlackFactory.Models;
 using TfsSlackFactory.Services;
+using Serilog;
 
 namespace TfsSlackFactory
 {
@@ -52,12 +53,14 @@ namespace TfsSlackFactory
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IOptions<TfsSettings> tfsSettings)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
+            loggerFactory.AddSerilog();
 
             if (!SettingsCheck(tfsSettings))
             {
-                return;
+                var ex = new Exception("Please check your appsettings.json file");
+                // I can't figure out how to log an exception using _logger, so I'm calling Serilog.Log directly here
+                Serilog.Log.Error(ex, "Oops");
+                throw ex;
             }
 
             var listeningPort = Configuration["ListeningPort"];
