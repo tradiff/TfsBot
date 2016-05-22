@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using TfsSlackFactory.Models;
 using TfsSlackFactory.Services;
 
@@ -45,24 +44,22 @@ namespace TfsSlackFactory.Controllers
 
             StreamReader reader = new StreamReader(Request.Body);
             var json = reader.ReadToEnd();
-            var obj = JsonConvert.DeserializeObject<WorkItemHook>(json);
+            var hookEvent = await _tfsService.CreateEventObject(json);
 
             foreach (var hookIntegration in _integrations.Single(x => x.Name.Equals(integration, StringComparison.CurrentCultureIgnoreCase)).Integrations)
             {
-                if (hookIntegration.Type != obj.EventType)
+                if (hookIntegration.Type != hookEvent.EventType)
                 {
                     continue;
                 }
-
-                var workItem = await _tfsService.GetWorkItem(obj);
 
                 if (!string.IsNullOrWhiteSpace(hookIntegration.HookFilter) &&
-                    !await _evalService.Eval(workItem, hookIntegration.HookFilter))
+                    !await _evalService.Eval(hookEvent, hookIntegration.HookFilter))
                 {
                     continue;
                 }
 
-                var message = await _formatService.Format(workItem, hookIntegration.Format);
+                var message = await _formatService.Format(hookEvent, hookIntegration.Format);
                 await _slackService.PostMessage(hookIntegration.SlackWebHookUrl,
                     new SlackMessageDTO
                     {

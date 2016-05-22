@@ -3,8 +3,9 @@ using System.Text.RegularExpressions;
 
 namespace TfsSlackFactory.Models
 {
-    public class SlackWorkItemModel
+    public class SlackWorkItemModel : ITfsEvent
     {
+        public string EventType { get; set; }
         public string DisplayName { get; set; }
         public string ProjectName { get; set; }
         public string WiUrl { get; set; }
@@ -24,7 +25,7 @@ namespace TfsSlackFactory.Models
         public int ParentWiId { get; set; }
         public string ParentWiTitle { get; set; }
 
-        public static SlackWorkItemModel FromTfs(TfsWorkItemModel tfsModel, WorkItemHook hookModel = null)
+        public static SlackWorkItemModel FromTfs(TfsWorkItemModel tfsModel, WorkItemEventHook hookModel = null)
         {
             if (tfsModel == null)
             {
@@ -32,7 +33,7 @@ namespace TfsSlackFactory.Models
             }
 
             var model = new SlackWorkItemModel();
-
+            
             model.DisplayName = GetDisplayName(tfsModel.Fields.ChangedBy);
             model.UserName = GetUserName(tfsModel.Fields.ChangedBy);
             model.AssignedTo = GetDisplayName(tfsModel.Fields.AssignedTo);
@@ -46,6 +47,7 @@ namespace TfsSlackFactory.Models
 
             if (hookModel != null)
             {
+                model.EventType = hookModel.EventType;
                 model.IsAssigmentChanged = hookModel.Resource.Fields.AssignedTo?.NewValue != hookModel.Resource.Fields.AssignedTo?.OldValue;
                 model.IsStateChanged = hookModel.Resource.Fields.State?.NewValue != hookModel.Resource.Fields.State?.OldValue;
                 model.PreviousState = hookModel.Resource.Fields.State?.OldValue;

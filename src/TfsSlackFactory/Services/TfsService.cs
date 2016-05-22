@@ -1,9 +1,11 @@
 ﻿using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using TfsSlackFactory.Models;
 
 namespace TfsSlackFactory.Services
@@ -20,8 +22,26 @@ namespace TfsSlackFactory.Services
             _baseAddress = tfsSettings.Value.Server;
         }
 
+        public async Task<ITfsEvent> CreateEventObject(string rawEvent)
+        {
+            var regex = new Regex(@"""eventType"".+?""(.+?)""");
+            var eventType = regex.Match(rawEvent).Groups[1].Value;
 
-        public async Task<SlackWorkItemModel> GetWorkItem(WorkItemHook hookModel)
+            if (eventType.StartsWith("workitem"))
+            {
+                return await GetWorkItem(JsonConvert.DeserializeObject<WorkItemEventHook>(rawEvent));
+
+            }
+            if (eventType.StartsWith("build"))
+            {
+                return JsonConvert.DeserializeObject<BuildEventHook>(rawEvent);
+            }
+
+            return null;
+        }
+
+
+        public async Task<SlackWorkItemModel> GetWorkItem(WorkItemEventHook hookModel)
         {
             using (var client = GetWebClient())
             {
