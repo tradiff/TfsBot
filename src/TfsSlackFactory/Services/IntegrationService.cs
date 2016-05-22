@@ -24,7 +24,7 @@ namespace TfsSlackFactory.Services
             _slackService = slackService;
         }
 
-        public async Task ProcessEvent(string input)
+        public async Task ProcessEvent(string integration, string input)
         {
             var hookEvent = await _tfsService.CreateEventObject(input);
 
@@ -33,7 +33,7 @@ namespace TfsSlackFactory.Services
                 return;
             }
 
-            foreach (var hookIntegration in Integrations.Single(x => x.Name.Equals(hookEvent.EventType, StringComparison.CurrentCultureIgnoreCase)).Integrations)
+            foreach (var hookIntegration in Integrations.Single(x => x.Name.Equals(integration, StringComparison.CurrentCultureIgnoreCase)).Integrations)
             {
                 if (hookIntegration.Type != hookEvent.EventType)
                 {

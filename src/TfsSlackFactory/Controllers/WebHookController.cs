@@ -33,7 +33,7 @@ namespace TfsSlackFactory.Controllers
 
             StreamReader reader = new StreamReader(Request.Body);
             var json = reader.ReadToEnd();
-            await _integrationService.ProcessEvent(json);
+            await _integrationService.ProcessEvent(integration, json);
 
             return Ok();
         }
