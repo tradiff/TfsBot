@@ -5,7 +5,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using TfsSlackFactory.Models;
 
 namespace TfsSlackFactory.Services
@@ -41,7 +40,7 @@ namespace TfsSlackFactory.Services
         }
 
 
-        public async Task<SlackWorkItemModel> GetWorkItem(WorkItemEventHook hookModel)
+        private async Task<SlackWorkItemModel> GetWorkItem(WorkItemEventHook hookModel)
         {
             using (var client = GetWebClient())
             {

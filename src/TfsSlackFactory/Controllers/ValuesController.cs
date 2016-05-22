@@ -41,11 +41,11 @@ namespace TfsSlackFactory.Controllers
 
         // GET api/values/SlackTest
         [HttpGet("SlackTest")]
-        public string SlackTest()
+        public async Task<string> SlackTest()
         {
             var slackWebHookUrl = "https://hooks.slack.com/services/...";
             SlackService slackService = new SlackService();
-            slackService.PostMessage(slackWebHookUrl, new SlackMessageDTO
+            await slackService.PostMessage(slackWebHookUrl, new SlackMessageDTO
             {
                 Channel = "#test",
                 IconEmoji = ":fire:",
