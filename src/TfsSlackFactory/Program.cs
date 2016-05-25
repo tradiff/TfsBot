@@ -20,7 +20,7 @@ namespace TfsSlackFactory
             Serilog.Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .Enrich.FromLogContext()
-                .WriteTo.RollingFile(@"logs\log-{Date}.txt")
+                .WriteTo.RollingFile(Path.Combine("logs", "log-{Date}.txt"))
                 .WriteTo.ColoredConsole()
                 .CreateLogger();
 
