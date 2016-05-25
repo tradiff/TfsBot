@@ -33,7 +33,7 @@ namespace TfsSlackFactory.Services
             }
             if (eventType.StartsWith("build"))
             {
-                return JsonConvert.DeserializeObject<BuildEventHook>(rawEvent);
+                return SlackBuildModel.FromEvent(JsonConvert.DeserializeObject<BuildEventHook>(rawEvent));
             }
 
             return null;
