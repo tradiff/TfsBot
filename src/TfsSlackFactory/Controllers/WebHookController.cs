@@ -21,19 +21,26 @@ namespace TfsSlackFactory.Controllers
         [HttpPost("")]
         public async Task<IActionResult> Post(string integration)
         {
-            if (string.IsNullOrWhiteSpace(integration))
+            try
             {
-                throw new ArgumentNullException(nameof(integration));
-            }
+                if (string.IsNullOrWhiteSpace(integration))
+                {
+                    throw new ArgumentNullException(nameof(integration));
+                }
 
-            if (!_integrationService.Integrations.Any(a => String.Equals(a.Name, integration, StringComparison.CurrentCultureIgnoreCase)))
+                if (!_integrationService.Integrations.Any(a => String.Equals(a.Name, integration, StringComparison.CurrentCultureIgnoreCase)))
+                {
+                    throw new ArgumentException($"No integration defined that matches {integration}");
+                }
+
+                StreamReader reader = new StreamReader(Request.Body);
+                var json = reader.ReadToEnd();
+                await _integrationService.ProcessEvent(integration, json);
+            }
+            catch (Exception ex)
             {
-                return BadRequest($"No integration defined that matches {integration}");
+                Serilog.Log.Error(ex, "Error occured");
             }
-
-            StreamReader reader = new StreamReader(Request.Body);
-            var json = reader.ReadToEnd();
-            await _integrationService.ProcessEvent(integration, json);
 
             return Ok();
         }

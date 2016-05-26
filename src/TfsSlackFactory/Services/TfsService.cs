@@ -44,21 +44,32 @@ namespace TfsSlackFactory.Services
         {
             using (var client = GetWebClient())
             {
-                var response = await client.GetAsync($"{_baseAddress}_apis/wit/workItems/{hookModel.Resource.WorkItemId}?$expand=relations&api-version=1.0");
-                var obj = JsonConvert.DeserializeObject<TfsWorkItemModel>(await response.Content.ReadAsStringAsync());
-
-                var model = SlackWorkItemModel.FromTfs(obj, hookModel);
-
-                if (obj.Relations != null && obj.Relations.Any(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse"))
+                string url = $"{_baseAddress}_apis/wit/workItems/{hookModel.Resource.WorkItemId}?$expand=relations&api-version=1.0";
+                var response = await client.GetAsync(url);
+                var responseString = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
                 {
-                    var parentModel = await GetWorkItem(obj.Relations.Single(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse").Url);
-                    model.ParentWiId = parentModel.WiId;
-                    model.ParentWiTitle = parentModel.WiTitle;
-                    model.ParentWiType = parentModel.WiType;
-                    model.ParentWiUrl = parentModel.WiUrl;
-                }
+                    var obj = JsonConvert.DeserializeObject<TfsWorkItemModel>(responseString);
 
-                return model;
+                    var model = SlackWorkItemModel.FromTfs(obj, hookModel);
+
+                    if (obj.Relations != null && obj.Relations.Any(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse"))
+                    {
+                        var parentModel = await GetWorkItem(obj.Relations.Single(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse").Url);
+                        model.ParentWiId = parentModel.WiId;
+                        model.ParentWiTitle = parentModel.WiTitle;
+                        model.ParentWiType = parentModel.WiType;
+                        model.ParentWiUrl = parentModel.WiUrl;
+                    }
+
+                    return model;
+                }
+                else
+                {
+                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
+                    Serilog.Log.Warning(responseString);
+                    return null;
+                }
             }
         }
 
