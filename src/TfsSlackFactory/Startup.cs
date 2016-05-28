@@ -82,16 +82,6 @@ namespace TfsSlackFactory
                 _logger.LogError("appsettings.json is missing the value for tfs\\server");
                 result = false;
             }
-            if (string.IsNullOrWhiteSpace(tfsSettings.Value.Username))
-            {
-                _logger.LogError("appsettings.json is missing the value for tfs\\username");
-                result = false;
-            }
-            if (string.IsNullOrWhiteSpace(tfsSettings.Value.Password))
-            {
-                _logger.LogError("appsettings.json is missing the value for tfs\\password");
-                result = false;
-            }
 
             return result;
         }
