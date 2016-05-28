@@ -17,7 +17,7 @@ namespace TfsSlackFactory.Services
         public TfsService(IOptions<TfsSettings> tfsSettings)
         {
             _networkCredential = new NetworkCredential(tfsSettings.Value.Username, tfsSettings.Value.Password);
-            
+
             _baseAddress = tfsSettings.Value.Server;
         }
 
@@ -42,27 +42,31 @@ namespace TfsSlackFactory.Services
 
         private async Task<SlackWorkItemModel> GetWorkItem(WorkItemEventHook hookModel)
         {
+            string url = $"{_baseAddress}_apis/wit/workItems/{hookModel.Resource.WorkItemId}";
+            var tfsWi = await GetWorkItem(url);
+            var slackWorkItemModel = SlackWorkItemModel.FromTfs(tfsWi, hookModel);
+            if (tfsWi != null && tfsWi.Relations != null && tfsWi.Relations.Any(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse"))
+            {
+                var parentTfsWi = await GetWorkItem(tfsWi.Relations.Single(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse").Url);
+                var parentSlackWi = SlackWorkItemModel.FromTfs(parentTfsWi);
+                slackWorkItemModel.ParentWiId = parentSlackWi.WiId;
+                slackWorkItemModel.ParentWiTitle = parentSlackWi.WiTitle;
+                slackWorkItemModel.ParentWiType = parentSlackWi.WiType;
+                slackWorkItemModel.ParentWiUrl = parentSlackWi.WiUrl;
+            }
+            return slackWorkItemModel;
+        }
+
+        private async Task<TfsWorkItemModel> GetWorkItem(string workItemUrl)
+        {
             using (var client = GetWebClient())
             {
-                string url = $"{_baseAddress}_apis/wit/workItems/{hookModel.Resource.WorkItemId}?$expand=relations&api-version=1.0";
-                var response = await client.GetAsync(url);
+                var response = await client.GetAsync($"{workItemUrl}?$expand=relations&api-version=1.0");
                 var responseString = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
                 {
-                    var obj = JsonConvert.DeserializeObject<TfsWorkItemModel>(responseString);
-
-                    var model = SlackWorkItemModel.FromTfs(obj, hookModel);
-
-                    if (obj.Relations != null && obj.Relations.Any(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse"))
-                    {
-                        var parentModel = await GetWorkItem(obj.Relations.Single(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse").Url);
-                        model.ParentWiId = parentModel.WiId;
-                        model.ParentWiTitle = parentModel.WiTitle;
-                        model.ParentWiType = parentModel.WiType;
-                        model.ParentWiUrl = parentModel.WiUrl;
-                    }
-
-                    return model;
+                    var tfsWorkItemModel = JsonConvert.DeserializeObject<TfsWorkItemModel>(responseString);
+                    return tfsWorkItemModel;
                 }
                 else
                 {
@@ -70,17 +74,6 @@ namespace TfsSlackFactory.Services
                     Serilog.Log.Warning(responseString);
                     return null;
                 }
-            }
-        }
-
-        private async Task<SlackWorkItemModel> GetWorkItem(string workItemUrl)
-        {
-            using (var client = GetWebClient())
-            {
-                var response = await client.GetAsync($"{workItemUrl}?$expand=relations&api-version=1.0");
-                var obj = JsonConvert.DeserializeObject<TfsWorkItemModel>(await response.Content.ReadAsStringAsync());
-
-                return SlackWorkItemModel.FromTfs(obj);
             }
         }
 

@@ -17,7 +17,6 @@ namespace TfsSlackFactory.Controllers
             _integrationService = integrationService;
         }
 
-        // GET: api/values
         [HttpPost("")]
         public async Task<IActionResult> Post(string integration)
         {

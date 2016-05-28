@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Serilog.Events;
 using TfsSlackFactory.Models;
 
 namespace TfsSlackFactory.Services
@@ -39,9 +40,11 @@ namespace TfsSlackFactory.Services
                         new KeyValuePair<string, string>("payload", payloadJson)
                     }
                 );
-                var result = client.PostAsync(webhookUrl, content).Result;
-                string resultContent = await result.Content.ReadAsStringAsync();
-                Console.WriteLine(resultContent);
+                var response = client.PostAsync(webhookUrl, content).Result;
+                var responseString = await response.Content.ReadAsStringAsync();
+                var logLevel = response.IsSuccessStatusCode ? LogEventLevel.Information : LogEventLevel.Warning;
+                Serilog.Log.Write(logLevel, $"Slack returned code: {(int)response.StatusCode} {response.StatusCode}");
+                Serilog.Log.Write(logLevel, responseString);
             }
         }
     }
