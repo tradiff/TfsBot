@@ -106,7 +106,7 @@ namespace TfsSlackFactory.Services
             }
         }
 
-        public async Task<List<TfsSubscriptionModel>> GetSubscriptions()
+        private async Task<List<TfsSubscriptionModel>> GetSubscriptions()
         {
             using (var client = GetWebClient())
             {
@@ -132,11 +132,11 @@ namespace TfsSlackFactory.Services
             }
         }
 
-        public async void CreateSubscription(SettingsIntegrationGroupModel integrationGroup)
+        private async void CreateSubscription(SettingsIntegrationGroupModel integrationGroup)
         {
             using (var client = GetWebClient())
             {
-                var postDataString = GetPostDataForIntegration(integrationGroup);
+                var postDataString = await GetPostDataForIntegration(integrationGroup);
 
                 var response = await client.PostAsync($"{_baseAddress}_apis/hooks/subscriptions?api-version=1.0",
                     new StringContent(postDataString, Encoding.UTF8, "application/json"));
@@ -158,7 +158,7 @@ namespace TfsSlackFactory.Services
         {
             using (var client = GetWebClient())
             {
-                var postDataString = GetPostDataForIntegration(integrationGroup);
+                var postDataString = await GetPostDataForIntegration(integrationGroup);
                 var response = await client.PutAsync($"{_baseAddress}_apis/hooks/subscriptions/{subscriptionId}?api-version=1.0",
                     new StringContent(postDataString, Encoding.UTF8, "application/json"));
 
@@ -175,8 +175,9 @@ namespace TfsSlackFactory.Services
             }
         }
 
-        private string GetPostDataForIntegration(SettingsIntegrationGroupModel integrationGroup)
+        private async Task<string> GetPostDataForIntegration(SettingsIntegrationGroupModel integrationGroup)
         {
+            var projectId = await GetProjectIdFromName(integrationGroup.TfsProject);
             var postData = new
             {
                 publisherId = "tfs",
@@ -185,7 +186,7 @@ namespace TfsSlackFactory.Services
                 consumerActionId = "httpRequest",
                 publisherInputs = new
                 {
-                    projectId = integrationGroup.TfsProject, // todo: allow project name instead
+                    projectId = projectId
                 },
                 consumerInputs = new
                 {
@@ -214,6 +215,29 @@ namespace TfsSlackFactory.Services
                 {
                     Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode} while deleting subscription {id}");
                     Serilog.Log.Warning(responseString);
+                }
+            }
+        }
+
+        private async Task<string> GetProjectIdFromName(string projectName)
+        {
+
+            using (var client = GetWebClient())
+            {
+                string url = $"{_baseAddress}_apis/projects/{projectName}?api-version=1.0";
+                var response = await client.GetAsync(url);
+                var responseString = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    var projectDefinition = new { id = "" };
+                    var project = JsonConvert.DeserializeAnonymousType(responseString, projectDefinition);
+                    return project.id;
+                }
+                else
+                {
+                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
+                    Serilog.Log.Warning(responseString);
+                    return null;
                 }
             }
         }
