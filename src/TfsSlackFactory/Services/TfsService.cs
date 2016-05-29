@@ -1,6 +1,8 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
@@ -11,11 +13,13 @@ namespace TfsSlackFactory.Services
 {
     public class TfsService
     {
+        private readonly List<SettingsIntegrationGroupModel> _integrations;
         private readonly NetworkCredential _networkCredential;
         private readonly string _baseAddress;
 
-        public TfsService(IOptions<TfsSettings> tfsSettings)
+        public TfsService(IOptions<List<SettingsIntegrationGroupModel>> integrations, IOptions<TfsSettings> tfsSettings)
         {
+            _integrations = integrations.Value;
             _networkCredential = new NetworkCredential(tfsSettings.Value.Username, tfsSettings.Value.Password);
 
             _baseAddress = tfsSettings.Value.Server;
@@ -29,16 +33,13 @@ namespace TfsSlackFactory.Services
             if (eventType.StartsWith("workitem"))
             {
                 return await GetWorkItem(JsonConvert.DeserializeObject<WorkItemEventHook>(rawEvent));
-
             }
             if (eventType.StartsWith("build"))
             {
                 return SlackBuildModel.FromEvent(JsonConvert.DeserializeObject<BuildEventHook>(rawEvent));
             }
-
             return null;
         }
-
 
         private async Task<SlackWorkItemModel> GetWorkItem(WorkItemEventHook hookModel)
         {
@@ -73,6 +74,146 @@ namespace TfsSlackFactory.Services
                     Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
                     Serilog.Log.Warning(responseString);
                     return null;
+                }
+            }
+        }
+
+        public async void SetupSubscriptions()
+        {
+            var existingSubscriptions = await GetSubscriptions();
+            
+
+            foreach (var subscription in existingSubscriptions)
+            {
+                if (!_integrations.Any(x => x.Name == subscription.integrationName))
+                {
+                    // if integration name is not valid
+                    DeleteSubscription(subscription.id);
+                }
+            }
+
+            foreach (var integrationGroup in _integrations)
+            {
+                var existingSubscription = existingSubscriptions.Find(x => x.integrationName == integrationGroup.Name);
+                if (existingSubscription == null)
+                {
+                    CreateSubscription(integrationGroup);
+                }
+                else
+                {
+                    UpdateSubscription(integrationGroup, existingSubscription.id);
+                }
+            }
+        }
+
+        public async Task<List<TfsSubscriptionModel>> GetSubscriptions()
+        {
+            using (var client = GetWebClient())
+            {
+                string url = $"{_baseAddress}_apis/hooks/subscriptions/?api-version=1.0";
+                var response = await client.GetAsync(url);
+                var responseString = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    var tfsSubscriptions = JsonConvert.DeserializeObject<TfsSubscriptionListModel>(responseString);
+                    var filteredSubscriptions = tfsSubscriptions.value.Where(x =>
+                        x?.consumerInputs?.httpHeaders != null &&
+                        x.consumerInputs.httpHeaders.Contains("x-created-by:TfsSlackFactory")
+                        ).ToList();
+
+                    return filteredSubscriptions;
+                }
+                else
+                {
+                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
+                    Serilog.Log.Warning(responseString);
+                    return null;
+                }
+            }
+        }
+
+        public async void CreateSubscription(SettingsIntegrationGroupModel integrationGroup)
+        {
+            using (var client = GetWebClient())
+            {
+                var postDataString = GetPostDataForIntegration(integrationGroup);
+
+                var response = await client.PostAsync($"{_baseAddress}_apis/hooks/subscriptions?api-version=1.0",
+                    new StringContent(postDataString, Encoding.UTF8, "application/json"));
+
+                var responseString = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    Serilog.Log.Information($"Created subscription for {integrationGroup.Name}");
+                }
+                else
+                {
+                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode} while creating subscription for {integrationGroup.Name}");
+                    Serilog.Log.Warning(responseString);
+                }
+            }
+        }
+
+        private async void UpdateSubscription(SettingsIntegrationGroupModel integrationGroup, string subscriptionId)
+        {
+            using (var client = GetWebClient())
+            {
+                var postDataString = GetPostDataForIntegration(integrationGroup);
+                var response = await client.PutAsync($"{_baseAddress}_apis/hooks/subscriptions/{subscriptionId}?api-version=1.0",
+                    new StringContent(postDataString, Encoding.UTF8, "application/json"));
+
+                var responseString = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    Serilog.Log.Information($"Updated subscription for {integrationGroup.Name}");
+                }
+                else
+                {
+                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode} while creating subscription for {integrationGroup.Name}");
+                    Serilog.Log.Warning(responseString);
+                }
+            }
+        }
+
+        private string GetPostDataForIntegration(SettingsIntegrationGroupModel integrationGroup)
+        {
+            var postData = new
+            {
+                publisherId = "tfs",
+                eventType = integrationGroup.EventType,
+                consumerId = "webHooks",
+                consumerActionId = "httpRequest",
+                publisherInputs = new
+                {
+                    projectId = integrationGroup.TfsProject, // todo: allow project name instead
+                },
+                consumerInputs = new
+                {
+                    resourceDetailsToSend = "All",
+                    detailedMessagesToSend = "none",
+                    messagesToSend = "none",
+                    url = $"{integrationGroup.SelfUrl}api/webhook/?integration={integrationGroup.Name}",
+                    httpHeaders = "x-created-by:TfsSlackFactory"
+                }
+            };
+            var postDataString = JsonConvert.SerializeObject(postData);
+            return postDataString;
+        }
+
+        private async void DeleteSubscription(string id)
+        {
+            using (var client = GetWebClient())
+            {
+                var response = await client.DeleteAsync($"{_baseAddress}_apis/hooks/subscriptions/{id}?api-version=1.0");
+                var responseString = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    Serilog.Log.Information($"Deleted subscription {id}");
+                }
+                else
+                {
+                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode} while deleting subscription {id}");
+                    Serilog.Log.Warning(responseString);
                 }
             }
         }

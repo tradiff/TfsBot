@@ -1,10 +1,48 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 
 namespace TfsSlackFactory.Models
 {
+    public class TfsSubscriptionListModel
+    {
+        public TfsSubscriptionModel[] value { get; set; }
+    }
+
+    public class TfsSubscriptionModel
+    {
+        public string id { get; set; }
+        public string publisherId { get; set; }
+        public string eventType { get; set; }
+        public string consumerId { get; set; }
+        public string consumerActionId { get; set; }
+        public PublisherInputs publisherInputs { get; set; }
+        public ConsumerInputs consumerInputs { get; set; }
+
+        public string integrationName
+        {
+            get
+            {
+                var regex = new Regex(@"integration=(.*)");
+                return regex.Match(this.consumerInputs.url).Groups[1].Value;
+            }
+        }
+
+        public class PublisherInputs
+        {
+            public string projectId { get; set; }
+        }
+        public class ConsumerInputs
+        {
+            public string detailedMessagesToSend { get; set; }
+            public string httpHeaders { get; set; }
+            public string messagesToSend { get; set; }
+            public string resourceDetailsToSend { get; set; }
+            public string url { get; set; }
+        }
+    }
+
     public class TfsWorkItemModel
     {
-
         public int Id { get; set; }
         public int Rev { get; set; }
         public RevisionFields Fields { get; set; }

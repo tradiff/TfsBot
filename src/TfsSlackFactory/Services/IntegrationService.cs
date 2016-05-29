@@ -33,13 +33,14 @@ namespace TfsSlackFactory.Services
                 return;
             }
 
-            foreach (var hookIntegration in Integrations.Single(x => x.Name.Equals(integration, StringComparison.CurrentCultureIgnoreCase)).Integrations)
+            var integrationGroup = Integrations.Single(x => x.Name.Equals(integration, StringComparison.CurrentCultureIgnoreCase));
+            if (integrationGroup.EventType != hookEvent.EventType)
             {
-                if (hookIntegration.Type != hookEvent.EventType)
-                {
-                    continue;
-                }
+                return;
+            }
 
+            foreach (var hookIntegration in integrationGroup.Integrations)
+            {
                 if (!string.IsNullOrWhiteSpace(hookIntegration.HookFilter) &&
                     !await _evalService.Eval(hookEvent, hookIntegration.HookFilter))
                 {

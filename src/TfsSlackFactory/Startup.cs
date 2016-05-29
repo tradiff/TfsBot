@@ -37,7 +37,7 @@ namespace TfsSlackFactory
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<List<SettingsIntegrationGroupModel>>(options => Configuration.GetSection("integrations").Bind(options));
+            services.Configure<List<SettingsIntegrationGroupModel>>(options => Configuration.GetSection("IntegrationGroups").Bind(options));
             services.Configure<TfsSettings>(options => Configuration.GetSection("tfs").Bind(options));
 
             // Add framework services.
@@ -52,7 +52,7 @@ namespace TfsSlackFactory
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IOptions<TfsSettings> tfsSettings)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IOptions<TfsSettings> tfsSettings, TfsService tfsService)
         {
             loggerFactory.AddSerilog();
 
@@ -63,6 +63,7 @@ namespace TfsSlackFactory
                 Serilog.Log.Error(ex, "Oops");
                 throw ex;
             }
+            tfsService.SetupSubscriptions();
 
             var listeningPort = Configuration["ListeningPort"];
             var serverAddresses = app.ServerFeatures.Get<IServerAddressesFeature>();
