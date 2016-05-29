@@ -37,11 +37,9 @@ namespace TfsSlackFactory
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<List<SettingsIntegrationGroupModel>>(options => Configuration.GetSection("IntegrationGroups").Bind(options));
-            services.Configure<TfsSettings>(options => Configuration.GetSection("tfs").Bind(options));
+            services.Configure<SettingsModel>(options => Configuration.Bind(options));
 
             // Add framework services.
-
             services.AddTransient<FormatService, FormatService>();
             services.AddTransient<SlackService, SlackService>();
             services.AddTransient<TfsService, TfsService>();
@@ -52,11 +50,11 @@ namespace TfsSlackFactory
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IOptions<TfsSettings> tfsSettings, TfsService tfsService)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IOptions<SettingsModel> settings, TfsService tfsService)
         {
             loggerFactory.AddSerilog();
 
-            if (!SettingsCheck(tfsSettings))
+            if (!SettingsCheck(settings))
             {
                 var ex = new Exception("Please check your appsettings.json file");
                 // I can't figure out how to log an exception using _logger, so I'm calling Serilog.Log directly here
@@ -75,10 +73,10 @@ namespace TfsSlackFactory
             Started = true;
         }
 
-        private bool SettingsCheck(IOptions<TfsSettings> tfsSettings)
+        private bool SettingsCheck(IOptions<SettingsModel> settings)
         {
             bool result = true;
-            if (string.IsNullOrWhiteSpace(tfsSettings.Value.Server))
+            if (string.IsNullOrWhiteSpace(settings.Value.Tfs.Server))
             {
                 _logger.LogError("appsettings.json is missing the value for tfs\\server");
                 result = false;

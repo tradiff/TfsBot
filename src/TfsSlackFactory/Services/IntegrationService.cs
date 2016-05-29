@@ -9,15 +9,15 @@ namespace TfsSlackFactory.Services
 {
     public class IntegrationService
     {
-        public List<SettingsIntegrationGroupModel> Integrations { get; }
+        private readonly SettingsModel _settings;
         private readonly TfsService _tfsService;
         private readonly FormatService _formatService;
         private readonly EvalService _evalService;
         private readonly SlackService _slackService;
 
-        public IntegrationService(IOptions<List<SettingsIntegrationGroupModel>> integrations, TfsService tfsService, FormatService formatService, EvalService evalService, SlackService slackService)
+        public IntegrationService(IOptions<SettingsModel> settings, TfsService tfsService, FormatService formatService, EvalService evalService, SlackService slackService)
         {
-            Integrations = integrations.Value;
+            _settings = settings.Value;
             _tfsService = tfsService;
             _formatService = formatService;
             _evalService = evalService;
@@ -33,7 +33,7 @@ namespace TfsSlackFactory.Services
                 return;
             }
 
-            var integrationGroup = Integrations.Single(x => x.Name.Equals(integration, StringComparison.CurrentCultureIgnoreCase));
+            var integrationGroup = _settings.IntegrationGroups.Single(x => x.Name.Equals(integration, StringComparison.CurrentCultureIgnoreCase));
             if (integrationGroup.EventType != hookEvent.EventType)
             {
                 return;

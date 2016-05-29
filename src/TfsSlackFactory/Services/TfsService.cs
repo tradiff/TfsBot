@@ -13,16 +13,16 @@ namespace TfsSlackFactory.Services
 {
     public class TfsService
     {
-        private readonly List<SettingsIntegrationGroupModel> _integrations;
+        private readonly SettingsModel _settings;
         private readonly NetworkCredential _networkCredential;
         private readonly string _baseAddress;
 
-        public TfsService(IOptions<List<SettingsIntegrationGroupModel>> integrations, IOptions<TfsSettings> tfsSettings)
+        public TfsService(IOptions<SettingsModel> settings)
         {
-            _integrations = integrations.Value;
-            _networkCredential = new NetworkCredential(tfsSettings.Value.Username, tfsSettings.Value.Password);
+            _settings = settings.Value;
+            _networkCredential = new NetworkCredential(_settings.Tfs.Username, _settings.Tfs.Password);
 
-            _baseAddress = tfsSettings.Value.Server;
+            _baseAddress = _settings.Tfs.Server;
         }
 
         public async Task<ITfsEvent> CreateEventObject(string rawEvent)
@@ -81,18 +81,17 @@ namespace TfsSlackFactory.Services
         public async void SetupSubscriptions()
         {
             var existingSubscriptions = await GetSubscriptions();
-            
 
             foreach (var subscription in existingSubscriptions)
             {
-                if (!_integrations.Any(x => x.Name == subscription.integrationName))
+                if (!_settings.IntegrationGroups.Any(x => x.Name == subscription.integrationName))
                 {
                     // if integration name is not valid
                     DeleteSubscription(subscription.id);
                 }
             }
 
-            foreach (var integrationGroup in _integrations)
+            foreach (var integrationGroup in _settings.IntegrationGroups)
             {
                 var existingSubscription = existingSubscriptions.Find(x => x.integrationName == integrationGroup.Name);
                 if (existingSubscription == null)
@@ -118,7 +117,7 @@ namespace TfsSlackFactory.Services
                     var tfsSubscriptions = JsonConvert.DeserializeObject<TfsSubscriptionListModel>(responseString);
                     var filteredSubscriptions = tfsSubscriptions.value.Where(x =>
                         x?.consumerInputs?.httpHeaders != null &&
-                        x.consumerInputs.httpHeaders.Contains("x-created-by:TfsSlackFactory")
+                        x.consumerInputs.httpHeaders.Contains($"x-created-by:{_settings.SelfName ?? "TfsSlackFactory"}")
                         ).ToList();
 
                     return filteredSubscriptions;
@@ -193,8 +192,8 @@ namespace TfsSlackFactory.Services
                     resourceDetailsToSend = "All",
                     detailedMessagesToSend = "none",
                     messagesToSend = "none",
-                    url = $"{integrationGroup.SelfUrl}api/webhook/?integration={integrationGroup.Name}",
-                    httpHeaders = "x-created-by:TfsSlackFactory"
+                    url = $"{_settings.SelfUrl}api/webhook/?integration={integrationGroup.Name}",
+                    httpHeaders = $"x-created-by:{_settings.SelfName ?? "TfsSlackFactory"}"
                 }
             };
             var postDataString = JsonConvert.SerializeObject(postData);

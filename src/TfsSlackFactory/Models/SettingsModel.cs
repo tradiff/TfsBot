@@ -2,6 +2,14 @@
 
 namespace TfsSlackFactory.Models
 {
+    public class SettingsModel
+    {
+        public int ListeningPort { get; set; }
+        public string SelfUrl { get; set; }
+        public string SelfName { get; set; }
+        public TfsSettings Tfs { get; set; }
+        public List<SettingsIntegrationGroupModel> IntegrationGroups { get; set; }
+    }
 
     public class TfsSettings
     {
@@ -16,8 +24,6 @@ namespace TfsSlackFactory.Models
         // todo: use TFS project name instead of guid
         public string TfsProject { get; set; }
         public string EventType { get; set; }
-        // todo: move SelfUrl 1 level up
-        public string SelfUrl { get; set; }
         public List<SettingsIntegrationModel> Integrations { get; set; }
     }
 

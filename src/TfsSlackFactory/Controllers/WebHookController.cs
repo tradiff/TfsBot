@@ -3,6 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using TfsSlackFactory.Models;
 using TfsSlackFactory.Services;
 
 namespace TfsSlackFactory.Controllers
@@ -11,10 +13,12 @@ namespace TfsSlackFactory.Controllers
     public class WebHookController : Controller
     {
         private readonly IntegrationService _integrationService;
+        private readonly SettingsModel _settings;
 
-        public WebHookController(IntegrationService integrationService)
+        public WebHookController(IntegrationService integrationService, IOptions<SettingsModel> settings)
         {
             _integrationService = integrationService;
+            _settings = settings.Value;
         }
 
         [HttpPost("")]
@@ -27,7 +31,7 @@ namespace TfsSlackFactory.Controllers
                     throw new ArgumentNullException(nameof(integration));
                 }
 
-                if (!_integrationService.Integrations.Any(a => String.Equals(a.Name, integration, StringComparison.CurrentCultureIgnoreCase)))
+                if (!_settings.IntegrationGroups.Any(a => String.Equals(a.Name, integration, StringComparison.CurrentCultureIgnoreCase)))
                 {
                     throw new ArgumentException($"No integration defined that matches {integration}");
                 }
