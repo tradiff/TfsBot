@@ -97,6 +97,8 @@ namespace TfsSlackFactory.Models
             public string Activity { get; set; }
             [JsonProperty("System.History")]
             public string History { get; set; }
+            [JsonProperty("System.BoardColumn")]
+            public string BoardColumn { get; set; }
         }
 
         public class Releation

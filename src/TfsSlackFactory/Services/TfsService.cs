@@ -168,7 +168,7 @@ namespace TfsSlackFactory.Services
                 }
                 else
                 {
-                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode} while creating subscription for {integrationGroup.Name}");
+                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode} while updating subscription for {integrationGroup.Name}");
                     Serilog.Log.Warning(responseString);
                 }
             }

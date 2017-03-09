@@ -24,6 +24,7 @@ namespace TfsSlackFactory.Models
         public string ParentWiType { get; set; }
         public int ParentWiId { get; set; }
         public string ParentWiTitle { get; set; }
+        public string BoardColumn { get; set; }
 
         public static SlackWorkItemModel FromTfs(TfsWorkItemModel tfsModel, WorkItemEventHook hookModel = null)
         {
@@ -44,6 +45,7 @@ namespace TfsSlackFactory.Models
             model.WiId = tfsModel.Id;
             model.WiTitle = tfsModel.Fields.Title;
             model.State = tfsModel.Fields.State;
+            model.BoardColumn = tfsModel.Fields.BoardColumn;
 
             if (hookModel != null)
             {
