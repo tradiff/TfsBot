@@ -19,6 +19,7 @@ namespace TfsSlackFactory.Models
         public string UserName { get; set; }
         public string AssignedToUserName { get; set; }
         public string PreviousState { get; set; }
+        public string Activity { get; set; }
 
         public string ParentWiUrl { get; set; }
         public string ParentWiType { get; set; }
@@ -46,6 +47,7 @@ namespace TfsSlackFactory.Models
             model.WiTitle = tfsModel.Fields.Title;
             model.State = tfsModel.Fields.State;
             model.BoardColumn = tfsModel.Fields.BoardColumn;
+            model.Activity = tfsModel.Fields.Activity;
 
             if (hookModel != null)
             {
