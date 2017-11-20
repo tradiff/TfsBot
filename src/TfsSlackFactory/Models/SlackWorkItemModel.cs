@@ -12,6 +12,7 @@ namespace TfsSlackFactory.Models
         public string WiType { get; set; }
         public int WiId { get; set; }
         public string WiTitle { get; set; }
+        public bool IsBoardColumnChanged { get; set; }
         public bool IsStateChanged { get; set; }
         public bool IsAssigmentChanged { get; set; }
         public string AssignedTo { get; set; }
@@ -25,6 +26,8 @@ namespace TfsSlackFactory.Models
         public int ParentWiId { get; set; }
         public string ParentWiTitle { get; set; }
         public string BoardColumn { get; set; }
+        public string PreviousBoardColumn { get; set; }
+        public int Rev { get; set; }
 
         public static SlackWorkItemModel FromTfs(TfsWorkItemModel tfsModel, WorkItemEventHook hookModel = null)
         {
@@ -53,6 +56,10 @@ namespace TfsSlackFactory.Models
                 model.IsAssigmentChanged = hookModel.Resource.Fields.AssignedTo?.NewValue != hookModel.Resource.Fields.AssignedTo?.OldValue;
                 model.IsStateChanged = hookModel.Resource.Fields.State?.NewValue != hookModel.Resource.Fields.State?.OldValue;
                 model.PreviousState = hookModel.Resource.Fields.State?.OldValue;
+
+                model.IsBoardColumnChanged = hookModel.Resource.Fields.BoardColumn?.NewValue != hookModel.Resource.Fields.BoardColumn?.OldValue;
+                model.PreviousBoardColumn = hookModel.Resource.Fields.BoardColumn?.OldValue;
+                model.Rev = hookModel.Resource.Rev;
             }
 
             return model;

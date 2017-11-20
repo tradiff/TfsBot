@@ -26,6 +26,8 @@ namespace TfsSlackFactory.Models
         public PropertyChanged<DateTime> AuthorizedDate { get; set; }
         [JsonProperty("System.RevisedDate")]
         public PropertyChanged<DateTime> RevisedDate { get; set; }
+        [JsonProperty("System.BoardColumn")]
+        public PropertyChanged<string> BoardColumn { get; set; }
         [JsonProperty("System.State")]
         public PropertyChanged<string> State { get; set; }
         [JsonProperty("System.Reason")]
