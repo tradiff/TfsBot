@@ -4,7 +4,6 @@ namespace TfsSlackFactory.Models
 {
     public class SettingsModel
     {
-        public int ListeningPort { get; set; }
         public string SelfUrl { get; set; }
         public string SelfName { get; set; }
         public TfsSettings Tfs { get; set; }

@@ -1,19 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.IO;
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Serilog;
-using Serilog.Sinks.RollingFile;
 
 namespace TfsSlackFactory
 {
-    public class Program 
+    public class Program
     {
         public static void Main(string[] args)
         {
@@ -26,14 +18,13 @@ namespace TfsSlackFactory
 
             Serilog.Log.Information("Starting TfsSlackFactory");
 
-
-            var hostingApplication = new WebHostBuilder()
-                .UseKestrel()
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseStartup<Startup>()
-                .Build();
-
-            hostingApplication.Run();
+            BuildWebHost(args).Run();
         }
+
+        public static IWebHost BuildWebHost(string[] args) =>
+            WebHost.CreateDefaultBuilder(args)
+            .UseStartup<Startup>()
+            .UseSerilog()
+            .Build();
     }
 }

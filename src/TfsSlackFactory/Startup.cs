@@ -1,42 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using TfsSlackFactory.Models;
 using TfsSlackFactory.Services;
-using Serilog;
 
 namespace TfsSlackFactory
 {
     public class Startup
     {
-        public static bool Started { get; set; }
         private readonly ILogger<Startup> _logger;
 
-        public Startup(IHostingEnvironment env, ILogger<Startup> logger)
+        public Startup(IConfiguration configuration, ILogger<Startup> logger)
         {
             _logger = logger;
-            // Set up configuration sources.
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", false, true);
-
-            builder.AddEnvironmentVariables();
-            Configuration = builder.Build();
+            Configuration = configuration;
         }
 
-        public static IConfigurationRoot Configuration { get; set; }
+        public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container
+        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMvc();
             services.Configure<SettingsModel>(options => Configuration.Bind(options));
 
             // Add framework services.
@@ -45,44 +32,19 @@ namespace TfsSlackFactory
             services.AddTransient<TfsService, TfsService>();
             services.AddTransient<EvalService, EvalService>();
             services.AddTransient<IntegrationService, IntegrationService>();
-
-            services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IOptions<SettingsModel> settings, TfsService tfsService)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, TfsService tfsService)
         {
-            loggerFactory.AddSerilog();
-
-            if (!SettingsCheck(settings))
+            if (env.IsDevelopment())
             {
-                var ex = new Exception("Please check your appsettings.json file");
-                // I can't figure out how to log an exception using _logger, so I'm calling Serilog.Log directly here
-                Serilog.Log.Error(ex, "Oops");
-                throw ex;
+                app.UseDeveloperExceptionPage();
             }
+
             tfsService.SetupSubscriptions();
 
-            var listeningPort = Configuration["ListeningPort"];
-            var serverAddresses = app.ServerFeatures.Get<IServerAddressesFeature>();
-            serverAddresses.Addresses.Clear();
-            serverAddresses.Addresses.Add($"http://*:{listeningPort}/");
-            _logger.LogInformation($"Magic happens at http://*:{listeningPort}/");
-
             app.UseMvc();
-            Started = true;
-        }
-
-        private bool SettingsCheck(IOptions<SettingsModel> settings)
-        {
-            bool result = true;
-            if (string.IsNullOrWhiteSpace(settings.Value.Tfs.Server))
-            {
-                _logger.LogError("appsettings.json is missing the value for tfs\\server");
-                result = false;
-            }
-
-            return result;
         }
     }
 }
