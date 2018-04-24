@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using TfsSlackFactory.Models;
-using TfsSlackFactory.Services;
+using TfsBot.Models;
+using TfsBot.Services;
 
-namespace TfsSlackFactory.Controllers
+namespace TfsBot.Controllers
 {
     [Route("api/[controller]")]
     public class ValuesController : Controller
@@ -50,7 +50,7 @@ namespace TfsSlackFactory.Controllers
                 Channel = "#test",
                 IconEmoji = ":fire:",
                 Text = "my test message",
-                Username = "tfsSlackFactory",
+                Username = "tfsBot",
                 Color = "#f433ff"
             });
             return "done";

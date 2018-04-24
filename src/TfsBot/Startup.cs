@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using TfsSlackFactory.Models;
-using TfsSlackFactory.Services;
+using TfsBot.Models;
+using TfsBot.Services;
 
-namespace TfsSlackFactory
+namespace TfsBot
 {
     public class Startup
     {

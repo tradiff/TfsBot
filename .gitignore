@@ -255,5 +255,5 @@ paket-files/
 .idea/
 *.sln.iml
 
-src/TfsSlackFactory/project.lock.json
+src/TfsBot/project.lock.json
 logs

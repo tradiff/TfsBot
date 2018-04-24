@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 
-namespace TfsSlackFactory.Models
+namespace TfsBot.Models
 {
     public class SlackWorkItemModel : ITfsEvent
     {

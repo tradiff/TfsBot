@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 
-namespace TfsSlackFactory.Services
+namespace TfsBot.Services
 {
     public class EvalService
     {

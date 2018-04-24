@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using TfsSlackFactory.Models;
+using TfsBot.Models;
 
-namespace TfsSlackFactory.Services
+namespace TfsBot.Services
 {
     public class IntegrationService
     {

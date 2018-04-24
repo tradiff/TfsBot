@@ -7,9 +7,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using TfsSlackFactory.Models;
+using TfsBot.Models;
 
-namespace TfsSlackFactory.Services
+namespace TfsBot.Services
 {
     public class TfsService
     {
@@ -117,7 +117,7 @@ namespace TfsSlackFactory.Services
                     var tfsSubscriptions = JsonConvert.DeserializeObject<TfsSubscriptionListModel>(responseString);
                     var filteredSubscriptions = tfsSubscriptions.value.Where(x =>
                         x?.consumerInputs?.httpHeaders != null &&
-                        x.consumerInputs.httpHeaders.Contains($"x-created-by:{_settings.SelfName ?? "TfsSlackFactory"}")
+                        x.consumerInputs.httpHeaders.Contains($"x-created-by:{_settings.SelfName ?? "TfsBot"}")
                         ).ToList();
 
                     return filteredSubscriptions;
@@ -193,7 +193,7 @@ namespace TfsSlackFactory.Services
                     detailedMessagesToSend = "none",
                     messagesToSend = "none",
                     url = $"{_settings.SelfUrl}api/webhook/?integration={integrationGroup.Name}",
-                    httpHeaders = $"x-created-by:{_settings.SelfName ?? "TfsSlackFactory"}"
+                    httpHeaders = $"x-created-by:{_settings.SelfName ?? "TfsBot"}"
                 }
             };
             var postDataString = JsonConvert.SerializeObject(postData);

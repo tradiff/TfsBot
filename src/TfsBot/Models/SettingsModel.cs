@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace TfsSlackFactory.Models
+namespace TfsBot.Models
 {
     public class SettingsModel
     {

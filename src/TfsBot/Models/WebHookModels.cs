@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace TfsSlackFactory.Models
+namespace TfsBot.Models
 {
 
     public class Message

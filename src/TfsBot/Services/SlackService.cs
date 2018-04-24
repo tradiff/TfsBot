@@ -4,9 +4,9 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Serilog.Events;
-using TfsSlackFactory.Models;
+using TfsBot.Models;
 
-namespace TfsSlackFactory.Services
+namespace TfsBot.Services
 {
     public class SlackService
     {

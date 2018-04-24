@@ -3,7 +3,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Serilog;
 
-namespace TfsSlackFactory
+namespace TfsBot
 {
     public class Program
     {
@@ -16,7 +16,7 @@ namespace TfsSlackFactory
                 .WriteTo.ColoredConsole()
                 .CreateLogger();
 
-            Serilog.Log.Information("Starting TfsSlackFactory");
+            Serilog.Log.Information("Starting TfsBot");
 
             BuildWebHost(args).Run();
         }

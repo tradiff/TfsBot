@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace TfsSlackFactory.Models
+namespace TfsBot.Models
 {
     public class SlackBuildModel : ITfsEvent
     {

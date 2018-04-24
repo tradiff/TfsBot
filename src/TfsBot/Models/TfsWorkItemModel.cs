@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 
-namespace TfsSlackFactory.Models
+namespace TfsBot.Models
 {
     public class TfsSubscriptionListModel
     {
