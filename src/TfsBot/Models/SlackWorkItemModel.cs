@@ -53,13 +53,17 @@ namespace TfsBot.Models
             if (hookModel != null)
             {
                 model.EventType = hookModel.EventType;
-                model.IsAssigmentChanged = hookModel.Resource.Fields.AssignedTo?.NewValue != hookModel.Resource.Fields.AssignedTo?.OldValue;
-                model.IsStateChanged = hookModel.Resource.Fields.State?.NewValue != hookModel.Resource.Fields.State?.OldValue;
-                model.PreviousState = hookModel.Resource.Fields.State?.OldValue;
-
-                model.IsBoardColumnChanged = hookModel.Resource.Fields.BoardColumn?.NewValue != hookModel.Resource.Fields.BoardColumn?.OldValue;
-                model.PreviousBoardColumn = hookModel.Resource.Fields.BoardColumn?.OldValue;
                 model.Rev = hookModel.Resource.Rev;
+
+                if (hookModel.Resource.Fields != null)
+                {
+                    model.IsAssigmentChanged = hookModel.Resource.Fields.AssignedTo?.NewValue != hookModel.Resource.Fields.AssignedTo?.OldValue;
+                    model.IsStateChanged = hookModel.Resource.Fields.State?.NewValue != hookModel.Resource.Fields.State?.OldValue;
+                    model.PreviousState = hookModel.Resource.Fields.State?.OldValue;
+
+                    model.IsBoardColumnChanged = hookModel.Resource.Fields.BoardColumn?.NewValue != hookModel.Resource.Fields.BoardColumn?.OldValue;
+                    model.PreviousBoardColumn = hookModel.Resource.Fields.BoardColumn?.OldValue;
+                }
             }
 
             return model;
