@@ -42,8 +42,6 @@ namespace TfsBot
                 app.UseDeveloperExceptionPage();
             }
 
-            tfsService.SetupSubscriptions();
-
             app.UseMvc();
         }
     }
