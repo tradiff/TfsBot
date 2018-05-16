@@ -107,7 +107,7 @@ namespace TfsBot.Models
         public string DownloadUrl { get; set; }
     }
 
-    public class BuildPserson
+    public class BuildPerson
     {
         public string Id { get; set; }
         public string DisplayName { get; set; }
@@ -120,7 +120,7 @@ namespace TfsBot.Models
     {
         public int Id { get; set; }
         public string Url { get; set; }
-        public BuildPserson RequestedFor { get; set; }
+        public BuildPerson RequestedFor { get; set; }
     }
 
     public class Definition
@@ -143,6 +143,9 @@ namespace TfsBot.Models
 
     public class BuildResource
     {
+
+        [JsonProperty("_links")]
+        public TfsBuildLinks Links { get; set; }
         public string Uri { get; set; }
         public int Id { get; set; }
         public string BuildNumber { get; set; }
@@ -151,16 +154,31 @@ namespace TfsBot.Models
         public string FinishTime { get; set; }
         public string Reason { get; set; }
         public string Status { get; set; }
+        public string Result { get; set; }
         public string DropLocation { get; set; }
         public Drop Drop { get; set; }
         public Log Log { get; set; }
         public string SourceGetVersion { get; set; }
-        public BuildPserson LastChangedBy { get; set; }
+        public BuildPerson LastChangedBy { get; set; }
         public bool RetainIndefinitely { get; set; }
         public bool HsDiagnostics { get; set; }
         public Definition Definition { get; set; }
         public Queue Queue { get; set; }
-        public List<Request> Requests { get; set; }
+        public BuildPerson RequestedFor { get; set; }
+        public BuildPerson RequestedBy { get; set; }
+        public string ProjectId { get; set; }
+
+        public class TfsBuildLinks
+        {
+            public Link Self { get; set; }
+            public Link Web { get; set; }
+            public Link Timeline { get; set; }
+        }
+
+        public class Link
+        {
+            public string Href { get; set; }
+        }
     }
 
     public class Resource

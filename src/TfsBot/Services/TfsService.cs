@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using TfsBot.Models;
 
 namespace TfsBot.Services
@@ -36,7 +37,10 @@ namespace TfsBot.Services
             }
             if (eventType.StartsWith("build"))
             {
-                return SlackBuildModel.FromEvent(JsonConvert.DeserializeObject<BuildEventHook>(rawEvent));
+                var jObject = JObject.Parse(rawEvent);
+                var hookModel = jObject.ToObject<BuildEventHook>();
+                hookModel.Resource.ProjectId = (string)jObject["resource"]["project"]["id"];
+                return await GetBuildModel(hookModel);
             }
             return null;
         }
@@ -68,6 +72,45 @@ namespace TfsBot.Services
                 {
                     var tfsWorkItemModel = JsonConvert.DeserializeObject<TfsWorkItemModel>(responseString);
                     return tfsWorkItemModel;
+                }
+                else
+                {
+                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
+                    Serilog.Log.Warning(responseString);
+                    return null;
+                }
+            }
+        }
+
+        private async Task<SlackBuildModel> GetBuildModel(BuildEventHook hookModel)
+        {
+            var buildHistory = await GetBuildHistory(hookModel);
+            var slackModel = SlackBuildModel.FromEvent(hookModel);
+            slackModel.BuildHistoryEmojis = "";
+            foreach (var item in buildHistory)
+            {
+                slackModel.BuildHistoryEmojis += $":tfsbot-build{item}:";
+            }
+
+            // find the previous non-canceled build (excluding most recent)
+            slackModel.PreviousBuildResult = buildHistory.Reverse<string>().Skip(1).FirstOrDefault(x => x != "canceled");
+
+            return slackModel;
+        }
+
+        private async Task<List<string>> GetBuildHistory(BuildEventHook hookModel)
+        {
+            string url = $"{_baseAddress}{hookModel.Resource.ProjectId}/_apis/build/builds/?api-version=2.0&definitions={hookModel.Resource.Definition.Id}&maxBuildsPerDefinition=5&statusFilter=completed";
+
+            using (var client = GetWebClient())
+            {
+                var response = await client.GetAsync(url);
+                var responseString = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode)
+                {
+                    var jObject = JObject.Parse(responseString);
+                    var buildHistory = jObject["value"].Select(x => (string)x["result"]).Reverse().ToList();
+                    return buildHistory;
                 }
                 else
                 {
