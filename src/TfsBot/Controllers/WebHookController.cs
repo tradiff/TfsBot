@@ -36,8 +36,11 @@ namespace TfsBot.Controllers
                     throw new ArgumentException($"No integration defined that matches {integration}");
                 }
 
-                StreamReader reader = new StreamReader(Request.Body);
-                var json = reader.ReadToEnd();
+                string json;
+                using (StreamReader reader = new StreamReader(Request.Body))
+                {
+                    json = reader.ReadToEnd();
+                }
                 await _integrationService.ProcessEvent(integration, json);
             }
             catch (Exception ex)

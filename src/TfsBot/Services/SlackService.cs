@@ -40,7 +40,7 @@ namespace TfsBot.Services
                         new KeyValuePair<string, string>("payload", payloadJson)
                     }
                 );
-                var response = client.PostAsync(webhookUrl, content).Result;
+                var response = await client.PostAsync(webhookUrl, content);
                 var responseString = await response.Content.ReadAsStringAsync();
                 var logLevel = response.IsSuccessStatusCode ? LogEventLevel.Information : LogEventLevel.Warning;
                 Serilog.Log.Write(logLevel, $"Slack returned code: {(int)response.StatusCode} {response.StatusCode}");
