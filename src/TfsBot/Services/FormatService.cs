@@ -39,9 +39,7 @@ namespace TfsBot.Services
 
         private static async Task<string> RunScript<T>(Script<string> script, T model)
         {
-            Serilog.Log.Information($"{GC.GetTotalMemory(false) / 1024 / 1024}");
             var result = await script.RunAsync(model);
-            Serilog.Log.Information($"{GC.GetTotalMemory(false) / 1024 / 1024}");
             return result.ReturnValue;
         }
 
