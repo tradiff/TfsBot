@@ -10,6 +10,8 @@ namespace TfsBot.Services
 {
     public class SlackService
     {
+        private static readonly HttpClient Client = new HttpClient();
+
         public SlackService()
         {
         }
@@ -33,14 +35,13 @@ namespace TfsBot.Services
             };
             string payloadJson = JsonConvert.SerializeObject(payload);
 
-            using (var client = new HttpClient())
+            using (var content = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("payload", payloadJson)
+                }
+            ))
+            using (var response = await Client.PostAsync(webhookUrl, content))
             {
-                var content = new FormUrlEncodedContent(new[]
-                    {
-                        new KeyValuePair<string, string>("payload", payloadJson)
-                    }
-                );
-                var response = await client.PostAsync(webhookUrl, content);
                 var responseString = await response.Content.ReadAsStringAsync();
                 var logLevel = response.IsSuccessStatusCode ? LogEventLevel.Information : LogEventLevel.Warning;
                 Serilog.Log.Write(logLevel, $"Slack returned code: {(int)response.StatusCode} {response.StatusCode}");
