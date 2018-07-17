@@ -14,14 +14,18 @@ namespace TfsBot.Services
 {
     public class TfsService
     {
+        private static HttpClient _client;
         private readonly SettingsModel _settings;
-        private readonly NetworkCredential _networkCredential;
         private readonly string _baseAddress;
 
         public TfsService(IOptions<SettingsModel> settings)
         {
             _settings = settings.Value;
-            _networkCredential = new NetworkCredential(_settings.Tfs.Username, _settings.Tfs.Password);
+
+            if (_client == null)
+            {
+                _client = new HttpClient(new HttpClientHandler { Credentials = new NetworkCredential(_settings.Tfs.Username, _settings.Tfs.Password) });
+            }
 
             _baseAddress = _settings.Tfs.Server;
         }
@@ -50,7 +54,7 @@ namespace TfsBot.Services
             string url = $"{_baseAddress}_apis/wit/workItems/{hookModel.Resource.WorkItemId}";
             var tfsWi = await GetWorkItem(url);
             var slackWorkItemModel = SlackWorkItemModel.FromTfs(tfsWi, hookModel);
-            if (tfsWi != null && tfsWi.Relations != null && tfsWi.Relations.Any(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse"))
+            if (tfsWi?.Relations != null && tfsWi.Relations.Any(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse"))
             {
                 var parentTfsWi = await GetWorkItem(tfsWi.Relations.Single(x => x.Rel == "System.LinkTypes.Hierarchy-Reverse").Url);
                 var parentSlackWi = SlackWorkItemModel.FromTfs(parentTfsWi);
@@ -64,21 +68,18 @@ namespace TfsBot.Services
 
         private async Task<TfsWorkItemModel> GetWorkItem(string workItemUrl)
         {
-            using (var client = GetWebClient())
+            using (var response = await _client.GetAsync($"{workItemUrl}?$expand=relations&api-version=1.0"))
             {
-                var response = await client.GetAsync($"{workItemUrl}?$expand=relations&api-version=1.0");
                 var responseString = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
                 {
                     var tfsWorkItemModel = JsonConvert.DeserializeObject<TfsWorkItemModel>(responseString);
                     return tfsWorkItemModel;
                 }
-                else
-                {
-                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
-                    Serilog.Log.Warning(responseString);
-                    return null;
-                }
+
+                Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
+                Serilog.Log.Warning(responseString);
+                return null;
             }
         }
 
@@ -102,9 +103,8 @@ namespace TfsBot.Services
         {
             string url = $"{_baseAddress}{hookModel.Resource.ProjectId}/_apis/build/builds/?api-version=2.0&definitions={hookModel.Resource.Definition.Id}&maxBuildsPerDefinition=5&statusFilter=completed";
 
-            using (var client = GetWebClient())
+            using (var response = await _client.GetAsync(url))
             {
-                var response = await client.GetAsync(url);
                 var responseString = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
                 {
@@ -112,12 +112,10 @@ namespace TfsBot.Services
                     var buildHistory = jObject["value"].Select(x => (string)x["result"]).Reverse().ToList();
                     return buildHistory;
                 }
-                else
-                {
-                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
-                    Serilog.Log.Warning(responseString);
-                    return null;
-                }
+
+                Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
+                Serilog.Log.Warning(responseString);
+                return null;
             }
         }
 
@@ -150,10 +148,9 @@ namespace TfsBot.Services
 
         private async Task<List<TfsSubscriptionModel>> GetSubscriptions()
         {
-            using (var client = GetWebClient())
+            string url = $"{_baseAddress}_apis/hooks/subscriptions/?api-version=1.0";
+            using (var response = await _client.GetAsync(url))
             {
-                string url = $"{_baseAddress}_apis/hooks/subscriptions/?api-version=1.0";
-                var response = await client.GetAsync(url);
                 var responseString = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
                 {
@@ -161,28 +158,24 @@ namespace TfsBot.Services
                     var filteredSubscriptions = tfsSubscriptions.value.Where(x =>
                         x?.consumerInputs?.httpHeaders != null &&
                         x.consumerInputs.httpHeaders.Contains($"x-created-by:{_settings.SelfName ?? "TfsBot"}")
-                        ).ToList();
+                    ).ToList();
 
                     return filteredSubscriptions;
                 }
-                else
-                {
-                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
-                    Serilog.Log.Warning(responseString);
-                    return null;
-                }
+
+                Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
+                Serilog.Log.Warning(responseString);
+                return null;
             }
         }
 
         private async void CreateSubscription(SettingsIntegrationGroupModel integrationGroup)
         {
-            using (var client = GetWebClient())
+            var postDataString = await GetPostDataForIntegration(integrationGroup);
+
+            using (var content = new StringContent(postDataString, Encoding.UTF8, "application/json"))
+            using (var response = await _client.PostAsync($"{_baseAddress}_apis/hooks/subscriptions?api-version=1.0", content))
             {
-                var postDataString = await GetPostDataForIntegration(integrationGroup);
-
-                var response = await client.PostAsync($"{_baseAddress}_apis/hooks/subscriptions?api-version=1.0",
-                    new StringContent(postDataString, Encoding.UTF8, "application/json"));
-
                 var responseString = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
                 {
@@ -190,7 +183,8 @@ namespace TfsBot.Services
                 }
                 else
                 {
-                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode} while creating subscription for {integrationGroup.Name}");
+                    Serilog.Log.Warning(
+                        $"TFS returned code: {(int)response.StatusCode} {response.StatusCode} while creating subscription for {integrationGroup.Name}");
                     Serilog.Log.Warning(responseString);
                 }
             }
@@ -198,12 +192,11 @@ namespace TfsBot.Services
 
         private async void UpdateSubscription(SettingsIntegrationGroupModel integrationGroup, string subscriptionId)
         {
-            using (var client = GetWebClient())
-            {
-                var postDataString = await GetPostDataForIntegration(integrationGroup);
-                var response = await client.PutAsync($"{_baseAddress}_apis/hooks/subscriptions/{subscriptionId}?api-version=1.0",
-                    new StringContent(postDataString, Encoding.UTF8, "application/json"));
+            var postDataString = await GetPostDataForIntegration(integrationGroup);
 
+            using (var content = new StringContent(postDataString, Encoding.UTF8, "application/json"))
+            using (var response = await _client.PutAsync($"{_baseAddress}_apis/hooks/subscriptions/{subscriptionId}?api-version=1.0", content))
+            {
                 var responseString = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
                 {
@@ -211,7 +204,8 @@ namespace TfsBot.Services
                 }
                 else
                 {
-                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode} while updating subscription for {integrationGroup.Name}");
+                    Serilog.Log.Warning(
+                        $"TFS returned code: {(int)response.StatusCode} {response.StatusCode} while updating subscription for {integrationGroup.Name}");
                     Serilog.Log.Warning(responseString);
                 }
             }
@@ -245,9 +239,8 @@ namespace TfsBot.Services
 
         private async void DeleteSubscription(string id)
         {
-            using (var client = GetWebClient())
+            using (var response = await _client.DeleteAsync($"{_baseAddress}_apis/hooks/subscriptions/{id}?api-version=1.0"))
             {
-                var response = await client.DeleteAsync($"{_baseAddress}_apis/hooks/subscriptions/{id}?api-version=1.0");
                 var responseString = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
                 {
@@ -255,7 +248,8 @@ namespace TfsBot.Services
                 }
                 else
                 {
-                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode} while deleting subscription {id}");
+                    Serilog.Log.Warning(
+                        $"TFS returned code: {(int)response.StatusCode} {response.StatusCode} while deleting subscription {id}");
                     Serilog.Log.Warning(responseString);
                 }
             }
@@ -263,11 +257,10 @@ namespace TfsBot.Services
 
         private async Task<string> GetProjectIdFromName(string projectName)
         {
+            string url = $"{_baseAddress}_apis/projects/{projectName}?api-version=1.0";
 
-            using (var client = GetWebClient())
+            using (var response = await _client.GetAsync(url))
             {
-                string url = $"{_baseAddress}_apis/projects/{projectName}?api-version=1.0";
-                var response = await client.GetAsync(url);
                 var responseString = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
                 {
@@ -275,18 +268,11 @@ namespace TfsBot.Services
                     var project = JsonConvert.DeserializeAnonymousType(responseString, projectDefinition);
                     return project.id;
                 }
-                else
-                {
-                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
-                    Serilog.Log.Warning(responseString);
-                    return null;
-                }
-            }
-        }
 
-        private HttpClient GetWebClient()
-        {
-            return new HttpClient(new HttpClientHandler { Credentials = _networkCredential });
+                Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
+                Serilog.Log.Warning(responseString);
+                return null;
+            }
         }
     }
 }
