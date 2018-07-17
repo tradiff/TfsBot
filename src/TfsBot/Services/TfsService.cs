@@ -39,6 +39,7 @@ namespace TfsBot.Services
             {
                 return await GetWorkItem(JsonConvert.DeserializeObject<WorkItemEventHook>(rawEvent));
             }
+
             if (eventType.StartsWith("build"))
             {
                 var jObject = JObject.Parse(rawEvent);
@@ -46,6 +47,7 @@ namespace TfsBot.Services
                 hookModel.Resource.ProjectId = (string)jObject["resource"]["project"]["id"];
                 return await GetBuildModel(hookModel);
             }
+
             return null;
         }
 
@@ -76,10 +78,13 @@ namespace TfsBot.Services
                     var tfsWorkItemModel = JsonConvert.DeserializeObject<TfsWorkItemModel>(responseString);
                     return tfsWorkItemModel;
                 }
+                else
+                {
+                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
+                    Serilog.Log.Warning(responseString);
+                    return null;
+                }
 
-                Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
-                Serilog.Log.Warning(responseString);
-                return null;
             }
         }
 
@@ -112,10 +117,13 @@ namespace TfsBot.Services
                     var buildHistory = jObject["value"].Select(x => (string)x["result"]).Reverse().ToList();
                     return buildHistory;
                 }
+                else
+                {
+                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
+                    Serilog.Log.Warning(responseString);
+                    return null;
+                }
 
-                Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
-                Serilog.Log.Warning(responseString);
-                return null;
             }
         }
 
@@ -162,10 +170,12 @@ namespace TfsBot.Services
 
                     return filteredSubscriptions;
                 }
-
-                Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
-                Serilog.Log.Warning(responseString);
-                return null;
+                else
+                {
+                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
+                    Serilog.Log.Warning(responseString);
+                    return null;
+                }
             }
         }
 
@@ -268,10 +278,12 @@ namespace TfsBot.Services
                     var project = JsonConvert.DeserializeAnonymousType(responseString, projectDefinition);
                     return project.id;
                 }
-
-                Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
-                Serilog.Log.Warning(responseString);
-                return null;
+                else
+                {
+                    Serilog.Log.Warning($"TFS returned code: {(int)response.StatusCode} {response.StatusCode}");
+                    Serilog.Log.Warning(responseString);
+                    return null;
+                }
             }
         }
     }
