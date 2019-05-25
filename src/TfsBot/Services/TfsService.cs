@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -24,7 +25,9 @@ namespace TfsBot.Services
 
             if (_client == null)
             {
-                _client = new HttpClient(new HttpClientHandler { Credentials = new NetworkCredential(_settings.Tfs.Username, _settings.Tfs.Password) });
+                string credentials = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes($":{_settings.Tfs.PersonalAccessToken}"));
+                _client = new HttpClient();
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
             }
 
             _baseAddress = _settings.Tfs.Server;
